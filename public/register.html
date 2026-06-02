@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Rejestracja</title>
+</head>
+<body>
+
+<h1>Rejestracja</h1>
+
+<input type="text" id="nickname" placeholder="Nickname">
+<br><br>
+
+<input type="password" id="password" placeholder="Hasło">
+<br><br>
+
+<button onclick="register()">Utwórz konto</button>
+
+<p id="result"></p>
+
+<script>
+async function register() {
+
+    const nickname = document.getElementById("nickname").value;
+    const password = document.getElementById("password").value;
+
+    const response = await fetch("/api/register", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            nickname,
+            password
+        })
+    });
+
+    const data = await response.json();
+
+    document.getElementById("result").innerText =
+        data.message || "Konto utworzone!";
+}
+</script>
+
+</body>
+</html>
