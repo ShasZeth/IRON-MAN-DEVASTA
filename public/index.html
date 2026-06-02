@@ -2,136 +2,162 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<title>Tablica</title>
+<title>IRON MAN DEVASTA</title>
 
 <style>
-
 body{
-    font-family: Arial;
-}
-
-#board{
-    display:grid;
-    grid-template-columns:repeat(10,1fr);
-    gap:10px;
-    margin-top:20px;
-}
-
-.tile{
-    min-height:80px;
-    border:1px solid black;
-    cursor:pointer;
+    margin:0;
+    min-height:100vh;
+    font-family:Arial, sans-serif;
+    background:#111;
 
     display:flex;
-    flex-direction:column;
     align-items:center;
     justify-content:center;
+}
 
-    font-weight:bold;
-
-    background:green;
+.container{
+    width:360px;
+    background:#222;
     color:white;
-
-    transition:.2s;
+    padding:25px;
+    border-radius:12px;
+    box-shadow:0 0 20px rgba(0,0,0,.5);
 }
 
-.tile:hover{
-    transform:scale(1.05);
+.box{
+    margin-bottom:25px;
 }
 
-.taken{
-    background:red;
+h1,h2{
+    text-align:center;
 }
 
+input{
+    width:100%;
+    padding:12px;
+    margin:8px 0;
+    box-sizing:border-box;
+    border:none;
+    border-radius:6px;
+}
+
+button{
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.register-btn{
+    background:#28a745;
+    color:white;
+}
+
+.login-btn{
+    background:#007bff;
+    color:white;
+}
+
+.message{
+    text-align:center;
+    margin-top:10px;
+}
 </style>
-
 </head>
+
 <body>
 
-<h1>IRON MAN DEVASTA</h1>
+<div class="container">
 
-<button onclick="logout()">
-    Wyloguj
-</button>
+    <div class="box">
+        <h1>Rejestracja</h1>
 
-<div id="board"></div>
+        <input id="registerNickname" placeholder="Nickname">
+        <input id="registerPassword" type="password" placeholder="Hasło">
+
+        <button class="register-btn" onclick="register()">
+            Utwórz konto
+        </button>
+
+        <p id="registerResult" class="message"></p>
+    </div>
+
+    <hr>
+
+    <div class="box">
+        <h2>Logowanie</h2>
+
+        <input id="loginNickname" placeholder="Nickname">
+        <input id="loginPassword" type="password" placeholder="Hasło">
+
+        <button class="login-btn" onclick="login()">
+            Zaloguj
+        </button>
+
+        <p id="loginResult" class="message"></p>
+    </div>
+
+</div>
 
 <script>
+async function register(){
 
-function logout(){
-    localStorage.removeItem("token");
-    window.location.href = "/login.html";
-}
+    const nickname =
+        document.getElementById("registerNickname").value;
 
-async function loadTiles(){
+    const password =
+        document.getElementById("registerPassword").value;
 
-    const response = await fetch("/api/tiles");
-    const tiles = await response.json();
-
-    const board = document.getElementById("board");
-
-    board.innerHTML = "";
-
-    tiles.forEach(tile => {
-
-        const div = document.createElement("div");
-
-        div.className = "tile";
-
-        if(tile.taken){
-            div.classList.add("taken");
-        }
-
-        if(tile.taken){
-
-            div.innerHTML = `
-                <div>#${tile.id}</div>
-                <small>${tile.nickname || "Zajęte"}</small>
-            `;
-
-        }else{
-
-            div.innerHTML = `
-                <div>#${tile.id}</div>
-                <small>Wolny</small>
-            `;
-
-        }
-
-        div.onclick = async () => {
-
-            const token = localStorage.getItem("token");
-
-            if (!token) {
-                alert("Najpierw się zaloguj");
-                return;
-            }
-
-            const response = await fetch(
-                `/api/tiles/${tile.id}`,
-                {
-                    method: "POST",
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
-            );
-
-            const data = await response.json();
-
-            alert(data.message);
-
-            loadTiles();
-        };
-
-        board.appendChild(div);
-
+    const response = await fetch("/api/register", {
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+            nickname,
+            password
+        })
     });
 
+    const data = await response.json();
+
+    document.getElementById("registerResult").innerText =
+        data.message || "Konto utworzone! Możesz się zalogować.";
 }
 
-loadTiles();
+async function login(){
 
+    const nickname =
+        document.getElementById("loginNickname").value;
+
+    const password =
+        document.getElementById("loginPassword").value;
+
+    const response = await fetch("/api/login", {
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+            nickname,
+            password
+        })
+    });
+
+    const data = await response.json();
+
+    if(data.success){
+        localStorage.setItem("token", data.token);
+        window.location.href = "/board.html";
+    }else{
+        document.getElementById("loginResult").innerText =
+            data.message;
+    }
+}
 </script>
 
 </body>
