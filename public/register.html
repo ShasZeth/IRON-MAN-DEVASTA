@@ -1,42 +1,123 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-    <meta charset="UTF-8">
-    <title>Rejestracja</title>
+<meta charset="UTF-8">
+<title>Rejestracja i logowanie</title>
+
+<style>
+body{
+    margin:0;
+    min-height:100vh;
+    font-family:Arial, sans-serif;
+    background:#111;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.container{
+    width:360px;
+    background:#222;
+    color:white;
+    padding:25px;
+    border-radius:12px;
+    box-shadow:0 0 20px rgba(0,0,0,.5);
+}
+
+.box{
+    margin-bottom:25px;
+}
+
+h1,h2{
+    text-align:center;
+}
+
+input{
+    width:100%;
+    padding:12px;
+    margin:8px 0;
+    box-sizing:border-box;
+    border:none;
+    border-radius:6px;
+}
+
+button{
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.register-btn{
+    background:#28a745;
+    color:white;
+}
+
+.login-btn{
+    background:#007bff;
+    color:white;
+}
+
+.message{
+    text-align:center;
+    margin-top:10px;
+}
+</style>
 </head>
+
 <body>
 
-<h1>Rejestracja</h1>
+<div class="container">
 
-<input type="text" id="nickname" placeholder="Nickname">
-<br><br>
+    <div class="box">
+        <h1>Rejestracja</h1>
 
-<input type="password" id="password" placeholder="Hasło">
-<br><br>
+        <input id="registerNickname" placeholder="Nickname">
+        <input id="registerPassword" type="password" placeholder="Hasło">
 
-<button onclick="register()">Utwórz konto</button>
+        <button class="register-btn" onclick="register()">
+            Utwórz konto
+        </button>
 
-<br><br>
+        <p id="registerResult" class="message"></p>
+    </div>
 
-<p>
-    Masz już konto?
-    <a href="/login.html">Zaloguj się</a>
-</p>
+    <hr>
 
-<p id="result"></p>
+    <div class="box">
+        <h2>Logowanie</h2>
+
+        <input id="loginNickname" placeholder="Nickname">
+        <input id="loginPassword" type="password" placeholder="Hasło">
+
+        <button class="login-btn" onclick="login()">
+            Zaloguj
+        </button>
+
+        <p id="loginResult" class="message"></p>
+    </div>
+
+</div>
 
 <script>
-async function register() {
+async function register(){
 
-    const nickname = document.getElementById("nickname").value;
-    const password = document.getElementById("password").value;
+    const nickname =
+        document.getElementById("registerNickname").value;
+
+    const password =
+        document.getElementById("registerPassword").value;
 
     const response = await fetch("/api/register", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
         },
-        body: JSON.stringify({
+        body:JSON.stringify({
             nickname,
             password
         })
@@ -44,8 +125,38 @@ async function register() {
 
     const data = await response.json();
 
-    document.getElementById("result").innerText =
+    document.getElementById("registerResult").innerText =
         data.message || "Konto utworzone!";
+}
+
+async function login(){
+
+    const nickname =
+        document.getElementById("loginNickname").value;
+
+    const password =
+        document.getElementById("loginPassword").value;
+
+    const response = await fetch("/api/login", {
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+            nickname,
+            password
+        })
+    });
+
+    const data = await response.json();
+
+    if(data.success){
+        localStorage.setItem("token", data.token);
+        window.location.href = "/";
+    }else{
+        document.getElementById("loginResult").innerText =
+            data.message;
+    }
 }
 </script>
 
