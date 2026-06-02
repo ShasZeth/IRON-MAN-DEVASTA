@@ -9,6 +9,7 @@ try {
     console.error(err);
 }
 const authRoutes = require("./routes/auth");
+const adminRoutes = require("./routes/admin");
 const tileRoutes = require("./routes/tiles");
 
 const app = express();
@@ -17,6 +18,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 
 app.use("/api", authRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/api/tiles", tileRoutes);
 
 app.use(express.static(path.join(__dirname, "public")));
