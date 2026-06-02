@@ -2,6 +2,9 @@ const express = require("express");
 const db = require("../database/db");
 
 const router = express.Router();
+router.get("/test", (req, res) => {
+    res.send("ADMIN ROUTE WORKS");
+});
 
 router.post("/make-admin", (req, res) => {
     const { nickname, secret } = req.body;
