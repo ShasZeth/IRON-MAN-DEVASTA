@@ -97,7 +97,17 @@ router.get("/", (req, res) => {
 });
 
 router.post("/:id", auth, (req, res) => {
+
     const tileId = req.params.id;
+
+    const { screenshotUrl } = req.body;
+
+    if (!screenshotUrl || screenshotUrl.trim() === "") {
+        return res.status(400).json({
+            success: false,
+            message: "Musisz podać link do screenshota"
+        });
+    }
 
     db.get(
         "SELECT * FROM tiles WHERE id = ?",
