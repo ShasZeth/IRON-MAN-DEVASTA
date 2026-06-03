@@ -1,49 +1,98 @@
-const sqlite3 = require("sqlite3").verbose();
-const path = require("path");
-const fs = require("fs");
+const { Pool } = require("pg");
 
-const dataDir = path.join(__dirname, "../data");
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+        rejectUnauthorized: false
+    }
+});
 
-if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir);
+async function initDatabase() {
+    try {
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                nickname TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                isAdmin INTEGER DEFAULT 0
+            )
+        `);
+
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS tiles (
+                id INTEGER PRIMARY KEY,
+                taken INTEGER DEFAULT 0,
+                takenBy INTEGER,
+                takenAt TIMESTAMP
+            )
+        `);
+
+        for (let i = 1; i <= 50; i++) {
+            await pool.query(
+                `
+                INSERT INTO tiles (id, taken)
+                VALUES ($1, 0)
+                ON CONFLICT (id) DO NOTHING
+                `,
+                [i]
+            );
+        }
+
+        console.log("Połączono z PostgreSQL");
+    } catch (err) {
+        console.error("Błąd PostgreSQL:", err.message);
+    }
 }
 
-const dbPath = path.join(dataDir, "board.db");
+initDatabase();
 
-const db = new sqlite3.Database(dbPath, (err) => {
-    if (err) {
-        console.error("Błąd bazy danych:", err.message);
-    } else {
-        console.log("Połączono z SQLite");
+const db = {
+    run(sql, params = [], callback = () => {}) {
+        const convertedSql = convertSql(sql);
+
+        pool.query(convertedSql, params)
+            .then(result => {
+                callback.call(
+                    {
+                        lastID: result.rows?.[0]?.id,
+                        changes: result.rowCount
+                    },
+                    null
+                );
+            })
+            .catch(err => callback(err));
+    },
+
+    get(sql, params = [], callback) {
+        const convertedSql = convertSql(sql);
+
+        pool.query(convertedSql, params)
+            .then(result => {
+                callback(null, result.rows[0]);
+            })
+            .catch(err => callback(err));
+    },
+
+    all(sql, params = [], callback) {
+        const convertedSql = convertSql(sql);
+
+        pool.query(convertedSql, params)
+            .then(result => {
+                callback(null, result.rows);
+            })
+            .catch(err => callback(err));
     }
-});
+};
 
-db.serialize(() => {
+function convertSql(sql) {
+    let index = 0;
 
-    db.run(`
-        CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nickname TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL,
-    isAdmin INTEGER DEFAULT 0
-)
-    `);
-
-    db.run(`
-        CREATE TABLE IF NOT EXISTS tiles (
-            id INTEGER PRIMARY KEY,
-            taken INTEGER DEFAULT 0,
-            takenBy INTEGER,
-            takenAt TEXT
-        )
-    `);
-
-    for (let i = 1; i <= 50; i++) {
-        db.run(
-            "INSERT OR IGNORE INTO tiles (id, taken) VALUES (?, 0)",
-            [i]
-        );
-    }
-});
+    return sql
+        .replace(/datetime\('now'\)/g, "NOW()")
+        .replace(/\?/g, () => {
+            index++;
+            return `$${index}`;
+        });
+}
 
 module.exports = db;
