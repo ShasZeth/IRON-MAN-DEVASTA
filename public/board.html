@@ -21,7 +21,7 @@ body{
 
 .header{
     text-align:center;
-    margin-bottom:20px;
+    margin-bottom:12px;
 }
 
 .top{
@@ -62,22 +62,37 @@ button{
 
 .stats{
     max-width:700px;
-    margin:0 auto 20px auto;
-    text-align:center;
-    background:rgba(20,20,20,.85);
+    margin:0 auto 10px auto;
+    background:rgba(20,20,20,.75);
     border:2px solid #b8860b;
     border-radius:12px;
-    padding:15px;
+    padding:8px 15px;
     box-shadow:0 0 15px rgba(0,0,0,.8);
+}
+
+.stats-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:6px;
+    font-weight:bold;
+}
+
+.stats-left{
+    color:#ffcc66;
+}
+
+.stats-right{
+    color:#90ee90;
 }
 
 .progress{
     width:100%;
-    height:24px;
+    height:14px;
     background:#333;
     border-radius:20px;
     overflow:hidden;
-    margin-top:10px;
+    margin-top:6px;
     border:1px solid #b8860b;
 }
 
@@ -86,6 +101,12 @@ button{
     width:0%;
     background:linear-gradient(90deg, #8b0000, #ff0000, #ffcc00);
     transition:.3s;
+}
+
+#progressText{
+    text-align:center;
+    margin:6px 0 0 0;
+    font-size:14px;
 }
 
 #adminPanel{
@@ -158,10 +179,6 @@ button{
     #board{
         grid-template-columns:repeat(5,1fr);
     }
-
-    .header h1{
-        font-size:30px;
-    }
 }
 </style>
 </head>
@@ -176,13 +193,23 @@ button{
 </div>
 
 <div class="stats">
-    <h3 id="counter">Wolne: 0 | Zajęte: 0</h3>
+
+    <div class="stats-row">
+        <span id="takenCount" class="stats-left">
+            Zajęte: 0
+        </span>
+
+        <span id="freeCount" class="stats-right">
+            Wolne: 0
+        </span>
+    </div>
 
     <div class="progress">
         <div id="progressBar"></div>
     </div>
 
     <p id="progressText">Zapełnienie: 0%</p>
+
 </div>
 
 <div id="adminPanel">
@@ -286,8 +313,11 @@ function updateStats(tiles){
     const percent =
         total === 0 ? 0 : Math.round((taken / total) * 100);
 
-    document.getElementById("counter").innerText =
-        `Wolne: ${free} | Zajęte: ${taken}`;
+    document.getElementById("takenCount").innerText =
+        `Zajęte: ${taken}`;
+
+    document.getElementById("freeCount").innerText =
+        `Wolne: ${free}`;
 
     document.getElementById("progressBar").style.width =
         `${percent}%`;
