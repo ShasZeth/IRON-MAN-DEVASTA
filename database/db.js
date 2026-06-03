@@ -27,12 +27,18 @@ async function initDatabase() {
 
         await pool.query(`
             CREATE TABLE IF NOT EXISTS tiles (
-                id INTEGER PRIMARY KEY,
-                taken INTEGER DEFAULT 0,
-                takenby INTEGER,
-                takenat TIMESTAMP
-            )
+    id INTEGER PRIMARY KEY,
+    taken INTEGER DEFAULT 0,
+    takenby INTEGER,
+    takenat TIMESTAMP,
+    screenshot_url TEXT
+)
         `);
+
+        await pool.query(`
+    ALTER TABLE tiles
+    ADD COLUMN IF NOT EXISTS screenshot_url TEXT
+`);
 
         await pool.query(`
             CREATE TABLE IF NOT EXISTS tile_history (
