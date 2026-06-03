@@ -345,10 +345,16 @@ async function loadTiles(){
 
         if(tile.taken){
             div.classList.add("taken");
-            div.innerHTML = `
-                <div>#${tile.id}</div>
-                <small>${tile.nickname || "Zajęte"}</small>
-            `;
+            const takenDate = tile.takenat
+    ? new Date(tile.takenat).toLocaleString("pl-PL")
+    : "";
+
+div.innerHTML = `
+    <div>#${tile.id}</div>
+    <small>${tile.nickname || "Zajęte"}</small>
+    <small>${takenDate}</small>
+    <small>📷 Screen</small>
+`;
         }else{
             div.innerHTML = `
                 <div>#${tile.id}</div>
@@ -365,12 +371,25 @@ async function loadTiles(){
                 return;
             }
 
-            const response = await fetch(`/api/tiles/${tile.id}`, {
-                method:"POST",
-                headers:{
-                    Authorization:`Bearer ${token}`
-                }
-            });
+            const screenshotUrl = prompt(
+    `Wklej link do screenshota dla kafelka #${tile.id}:`
+);
+
+if(!screenshotUrl || screenshotUrl.trim() === ""){
+    alert("Musisz podać link do screenshota");
+    return;
+}
+
+const response = await fetch(`/api/tiles/${tile.id}`, {
+    method:"POST",
+    headers:{
+        "Content-Type":"application/json",
+        Authorization:`Bearer ${token}`
+    },
+    body:JSON.stringify({
+        screenshotUrl:screenshotUrl.trim()
+    })
+});
 
             const data = await response.json();
 
