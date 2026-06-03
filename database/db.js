@@ -1,4 +1,5 @@
 const { Pool } = require("pg");
+require("dotenv").config();
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -14,16 +15,33 @@ async function initDatabase() {
                 id SERIAL PRIMARY KEY,
                 nickname TEXT UNIQUE NOT NULL,
                 password TEXT NOT NULL,
-                isAdmin INTEGER DEFAULT 0
+                isadmin INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT NOW()
             )
+        `);
+
+        await pool.query(`
+            ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()
         `);
 
         await pool.query(`
             CREATE TABLE IF NOT EXISTS tiles (
                 id INTEGER PRIMARY KEY,
                 taken INTEGER DEFAULT 0,
-                takenBy INTEGER,
-                takenAt TIMESTAMP
+                takenby INTEGER,
+                takenat TIMESTAMP
+            )
+        `);
+
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS tile_history (
+                id SERIAL PRIMARY KEY,
+                tile_id INTEGER,
+                user_id INTEGER,
+                action TEXT NOT NULL,
+                note TEXT,
+                created_at TIMESTAMP DEFAULT NOW()
             )
         `);
 
