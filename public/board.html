@@ -55,7 +55,8 @@ button{
     color:white;
 }
 
-.unlock-btn{
+.unlock-btn,
+.modal-unlock{
     background:#ff9800;
     color:white;
 }
@@ -142,7 +143,7 @@ button{
     display:grid;
     grid-template-columns:repeat(10,1fr);
     gap:10px;
-    margin-top:35px;
+    margin-top:40px;
 }
 
 .tile{
@@ -185,9 +186,51 @@ button{
     border-color:#ffcc00;
 }
 
+.modal{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.82);
+    z-index:9999;
+}
+
+.modal-content{
+    width:520px;
+    max-width:90%;
+    margin:100px auto;
+    background:rgba(15,15,15,.96);
+    border:2px solid #b8860b;
+    border-radius:12px;
+    padding:20px;
+    color:white;
+    box-shadow:0 0 25px black;
+}
+
+.close{
+    float:right;
+    font-size:30px;
+    cursor:pointer;
+    color:#ffcc00;
+}
+
+.modal-content a{
+    color:#ffd700;
+}
+
+.modal-btn{
+    display:block;
+    width:100%;
+    padding:10px;
+    margin-top:10px;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
 @media(max-width:800px){
     .header{
-        margin-top:100px;
+        margin-top:180px;
     }
 
     #board{
@@ -209,13 +252,8 @@ button{
 <div class="stats">
 
     <div class="stats-row">
-        <span id="freeCount" class="stats-left">
-            Wolne: 0
-        </span>
-
-        <span id="takenCount" class="stats-right">
-            Zajęte: 0
-        </span>
+        <span id="freeCount" class="stats-left">Wolne: 0</span>
+        <span id="takenCount" class="stats-right">Zajęte: 0</span>
     </div>
 
     <div class="progress">
@@ -237,10 +275,114 @@ button{
 
 <div id="board"></div>
 
+<div id="tileModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeTileModal()">×</span>
+        <div id="tileDetails"></div>
+    </div>
+</div>
+
 <script>
 function logout(){
     localStorage.removeItem("token");
     window.location.href = "/";
+}
+
+function getTokenData(){
+    const token = localStorage.getItem("token");
+
+    if(!token){
+        return null;
+    }
+
+    try{
+        return JSON.parse(atob(token.split(".")[1]));
+    }catch(error){
+        return null;
+    }
+}
+
+function isAdmin(){
+    const data = getTokenData();
+    return data && data.isAdmin;
+}
+
+function closeTileModal(){
+    document.getElementById("tileModal").style.display = "none";
+}
+
+function openTileModal(tile){
+    const date = tile.takenat
+        ? new Date(tile.takenat).toLocaleString("pl-PL")
+        : "-";
+
+    let html = `
+        <h2>Kafelek #${tile.id}</h2>
+
+        <p><b>Status:</b> ${tile.taken ? "Zajęty" : "Wolny"}</p>
+        <p><b>Właściciel:</b> ${tile.nickname || "-"}</p>
+        <p><b>Data zajęcia:</b> ${date}</p>
+    `;
+
+    if(tile.screenshot_url){
+        html += `
+            <p>
+                <b>Screenshot:</b>
+                <a href="${tile.screenshot_url}" target="_blank">
+                    Otwórz screenshot
+                </a>
+            </p>
+        `;
+    }else{
+        html += `<p><b>Screenshot:</b> Brak</p>`;
+    }
+
+    if(isAdmin()){
+        html += `
+            <hr>
+
+            <button
+                class="modal-btn modal-unlock"
+                onclick="adminUnlockTile(${tile.id})"
+            >
+                Odblokuj kafelek
+            </button>
+        `;
+    }
+
+    document.getElementById("tileDetails").innerHTML = html;
+    document.getElementById("tileModal").style.display = "block";
+}
+
+async function adminUnlockTile(tileId){
+    const confirmUnlock = confirm(
+        `Czy na pewno chcesz odblokować kafelek #${tileId}?`
+    );
+
+    if(!confirmUnlock){
+        return;
+    }
+
+    const token = localStorage.getItem("token");
+
+    const response = await fetch(`/api/tiles/unlock/${tileId}`, {
+        method:"POST",
+        headers:{
+            Authorization:`Bearer ${token}`
+        }
+    });
+
+    const data = await response.json();
+
+    alert(data.message);
+
+    closeTileModal();
+
+    await loadTiles();
+
+    if(document.getElementById("adminPanel").style.display === "block"){
+        await loadAdminTiles();
+    }
 }
 
 async function toggleAdminPanel(){
@@ -284,39 +426,13 @@ async function loadAdminTiles(){
 
         row.innerHTML = `
             <span><strong>Kafelek #${tile.id}</strong> — ${tile.nickname}</span>
-            <button class="unlock-btn" onclick="unlockTile(${tile.id})">
+            <button class="unlock-btn" onclick="adminUnlockTile(${tile.id})">
                 Odblokuj
             </button>
         `;
 
         container.appendChild(row);
     });
-}
-
-async function unlockTile(id){
-    const confirmUnlock = confirm(
-        `Czy na pewno chcesz odblokować kafelek #${id}?`
-    );
-
-    if(!confirmUnlock){
-        return;
-    }
-
-    const token = localStorage.getItem("token");
-
-    const response = await fetch(`/api/tiles/unlock/${id}`, {
-        method:"POST",
-        headers:{
-            Authorization:`Bearer ${token}`
-        }
-    });
-
-    const data = await response.json();
-
-    alert(data.message);
-
-    await loadTiles();
-    await loadAdminTiles();
 }
 
 function updateStats(tiles){
@@ -354,21 +470,22 @@ async function loadTiles(){
         div.className = "tile";
 
         if(tile.taken){
-            div.classList.add("taken");
-const takenDate = tile.takenat
-    ? new Date(tile.takenat).toLocaleString("pl-PL")
-    : "";
+            const takenDate = tile.takenat
+                ? new Date(tile.takenat).toLocaleString("pl-PL")
+                : "";
 
-div.innerHTML = `
-    <div>#${tile.id}</div>
-    <small>${tile.nickname || "Zajęte"}</small>
-    <small>${takenDate}</small>
-    ${
-        tile.screenshot_url
-            ? `<a href="${tile.screenshot_url}" target="_blank" onclick="event.stopPropagation()">📷 Screen</a>`
-            : `<small>Brak screena</small>`
-    }
-`;
+            div.classList.add("taken");
+
+            div.innerHTML = `
+                <div>#${tile.id}</div>
+                <small>${tile.nickname || "Zajęte"}</small>
+                <small>${takenDate}</small>
+                ${
+                    tile.screenshot_url
+                        ? `<small>📷 Screen</small>`
+                        : `<small>Brak screena</small>`
+                }
+            `;
         }else{
             div.innerHTML = `
                 <div>#${tile.id}</div>
@@ -385,27 +502,32 @@ div.innerHTML = `
                 return;
             }
 
+            if(tile.taken){
+                openTileModal(tile);
+                return;
+            }
+
             const screenshotUrl = prompt(
-    `Wklej link do screenshota dla kafelka #${tile.id}:`
-);
+                `Wklej link do screenshota dla kafelka #${tile.id}:`
+            );
 
-if(!screenshotUrl || screenshotUrl.trim() === ""){
-    alert("Musisz podać link do screenshota");
-    return;
-}
+            if(!screenshotUrl || screenshotUrl.trim() === ""){
+                alert("Musisz podać link do screenshota");
+                return;
+            }
 
-const response = await fetch(`/api/tiles/${tile.id}`, {
-    method:"POST",
-    headers:{
-        "Content-Type":"application/json",
-        Authorization:`Bearer ${token}`
-    },
-    body:JSON.stringify({
-        screenshotUrl:screenshotUrl.trim()
-    })
-});
+            const claimResponse = await fetch(`/api/tiles/${tile.id}`, {
+                method:"POST",
+                headers:{
+                    "Content-Type":"application/json",
+                    Authorization:`Bearer ${token}`
+                },
+                body:JSON.stringify({
+                    screenshotUrl:screenshotUrl.trim()
+                })
+            });
 
-            const data = await response.json();
+            const data = await claimResponse.json();
 
             alert(data.message);
 
@@ -419,6 +541,14 @@ const response = await fetch(`/api/tiles/${tile.id}`, {
         board.appendChild(div);
     });
 }
+
+window.onclick = function(event){
+    const modal = document.getElementById("tileModal");
+
+    if(event.target === modal){
+        closeTileModal();
+    }
+};
 
 loadTiles();
 </script>
