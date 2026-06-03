@@ -244,8 +244,14 @@ button{
 
 <div class="header">
     <div class="top">
-        <button class="logout-btn" onclick="logout()">Wyloguj</button>
-        <button class="admin-btn" onclick="toggleAdminPanel()">Panel admina</button>
+        <button
+    id="adminButton"
+    class="admin-btn"
+    onclick="toggleAdminPanel()"
+    style="display:none;"
+>
+    Panel admina
+</button>
     </div>
 </div>
 
@@ -305,6 +311,15 @@ function getTokenData(){
 function isAdmin(){
     const data = getTokenData();
     return data && data.isAdmin;
+}
+
+function showAdminButton(){
+
+    if(isAdmin()){
+        document.getElementById("adminButton").style.display =
+            "inline-block";
+    }
+
 }
 
 function closeTileModal(){
@@ -386,6 +401,11 @@ async function adminUnlockTile(tileId){
 }
 
 async function toggleAdminPanel(){
+
+if(!isAdmin()){
+    return;
+}
+
     const panel = document.getElementById("adminPanel");
 
     if(panel.style.display === "none" || panel.style.display === ""){
@@ -550,6 +570,7 @@ window.onclick = function(event){
     }
 };
 
+showAdminButton();
 loadTiles();
 </script>
 
