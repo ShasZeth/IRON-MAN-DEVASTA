@@ -46,7 +46,8 @@ router.post("/unlock/:id", auth, (req, res) => {
         UPDATE tiles
         SET taken = 0,
             takenby = NULL,
-            takenat = NULL
+            takenat = NULL,
+            screenshot_url = NULL
         WHERE id = ?
         `,
         [tileId],
@@ -80,6 +81,7 @@ router.get("/", (req, res) => {
             tiles.taken,
             tiles.takenby,
             tiles.takenat,
+            tiles.screenshot_url,
             users.nickname
         FROM tiles
         LEFT JOIN users ON users.id = tiles.takenby
@@ -97,9 +99,7 @@ router.get("/", (req, res) => {
 });
 
 router.post("/:id", auth, (req, res) => {
-
     const tileId = req.params.id;
-
     const { screenshotUrl } = req.body;
 
     if (!screenshotUrl || screenshotUrl.trim() === "") {
@@ -132,13 +132,21 @@ router.post("/:id", auth, (req, res) => {
                 UPDATE tiles
                 SET taken = 1,
                     takenby = ?,
-                    takenat = NOW()
+                    takenat = NOW(),
+                    screenshot_url = ?
                 WHERE id = ?
                 `,
-                [req.user.id, tileId],
+                [
+                    req.user.id,
+                    screenshotUrl.trim(),
+                    tileId
+                ],
                 function(err) {
                     if (err) {
-                        return res.status(500).json({ success: false });
+                        return res.status(500).json({
+                            success: false,
+                            message: "Błąd zapisu kafelka"
+                        });
                     }
 
                     db.run(
