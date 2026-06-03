@@ -170,6 +170,16 @@ button{
     box-shadow:0 0 18px #ffd700;
 }
 
+.tile a{
+    color:#ffd700;
+    text-decoration:none;
+    margin-top:3px;
+}
+
+.tile a:hover{
+    text-decoration:underline;
+}
+
 .taken{
     background:linear-gradient(145deg, #7a0c0c, #d01818);
     border-color:#ffcc00;
@@ -345,7 +355,7 @@ async function loadTiles(){
 
         if(tile.taken){
             div.classList.add("taken");
-            const takenDate = tile.takenat
+const takenDate = tile.takenat
     ? new Date(tile.takenat).toLocaleString("pl-PL")
     : "";
 
@@ -353,7 +363,11 @@ div.innerHTML = `
     <div>#${tile.id}</div>
     <small>${tile.nickname || "Zajęte"}</small>
     <small>${takenDate}</small>
-    <small>📷 Screen</small>
+    ${
+        tile.screenshot_url
+            ? `<a href="${tile.screenshot_url}" target="_blank" onclick="event.stopPropagation()">📷 Screen</a>`
+            : `<small>Brak screena</small>`
+    }
 `;
         }else{
             div.innerHTML = `
