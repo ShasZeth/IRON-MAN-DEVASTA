@@ -10,18 +10,28 @@ body{
     margin:0;
     min-height:100vh;
     color:white;
-
-    background:url("/img/iron-man-devasta-ui.png");
-    background-size:cover;
-    background-position:center center;
-    background-repeat:no-repeat;
-    background-attachment:fixed;
-
-    overflow-x:hidden;
+    background:#000;
+    overflow:auto;
+    display:flex;
+    justify-content:center;
 }
 
+#gameUI{
+    position:relative;
+    width:1920px;
+    height:1080px;
+    flex-shrink:0;
+
+    background:url("/img/iron-man-devasta-ui.png");
+    background-size:100% 100%;
+    background-position:center center;
+    background-repeat:no-repeat;
+}
+
+/* HOTSPOTY MENU */
+
 #uiHotspots{
-    position:fixed;
+    position:absolute;
     inset:0;
     z-index:1000;
     pointer-events:none;
@@ -33,43 +43,83 @@ body{
     border:none;
     cursor:pointer;
     pointer-events:auto;
-
     transition:all .25s ease;
 }
 
-
-/* Dopasowane do grafiki 1792x1024 */
 #logoutHotspot{
-    position:absolute;
-
-    left:74px;
-    top:320px;
-
-    width:220px;
-    height:74px;
-
-    background:rgba(255,0,0,.20);
-    outline:2px solid red;
+    left:70px;
+    top:318px;
+    width:245px;
+    height:88px;
 }
 
 #rulesHotspot{
-    position:absolute;
-
-    left:74px;
-    top:463px;
-
-    width:220px;
-    height:74px;
-
-    background:rgba(255,0,0,.20);
-    outline:2px solid red;
+    left:70px;
+    top:462px;
+    width:245px;
+    height:88px;
 }
+
+#logoutHotspot:hover,
+#rulesHotspot:hover{
+    border-radius:12px;
+    background:rgba(255,215,0,.08);
+    box-shadow:
+        0 0 15px rgba(255,215,0,.45),
+        0 0 25px rgba(255,215,0,.35),
+        inset 0 0 15px rgba(255,215,0,.15);
+}
+
+/* IKONA PANELU ADMINA */
+
+#adminGear{
+    position:absolute;
+    top:24px;
+    right:24px;
+
+    width:50px;
+    height:50px;
+    min-width:50px;
+    max-width:50px;
+    min-height:50px;
+    max-height:50px;
+
+    border:2px solid #b8860b;
+    border-radius:50%;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(40,40,40,.95),
+            rgba(10,10,10,.95)
+        );
+
+    color:#ffd700;
+    font-size:24px;
+    font-weight:bold;
+    cursor:pointer;
+    z-index:2000;
+
+    box-shadow:0 0 12px rgba(255,215,0,.35);
+
+    display:none;
+}
+
+#adminGear:hover{
+    transform:rotate(30deg);
+    box-shadow:0 0 18px rgba(255,215,0,.8);
+}
+
+/* RANKING */
+
 #rankingContent{
-    position:fixed;
-    right:5.8%;
-    top:25%;
-    width:13%;
-    height:53%;
+    position:absolute;
+    right:95px;
+    top:275px;
+
+    width:235px;
+    height:500px;
+
     z-index:900;
     color:white;
     font-size:14px;
@@ -86,10 +136,14 @@ body{
     padding:8px 0;
 }
 
+/* GŁÓWNA ZAWARTOŚĆ */
+
 .page-content{
-    padding-top:300px;
-    max-width:1200px;
-    margin:0 auto;
+    position:absolute;
+    top:300px;
+    left:360px;
+    width:1200px;
+    z-index:800;
 }
 
 .stats{
@@ -217,6 +271,8 @@ body{
     border-color:#ffcc00;
 }
 
+/* MODALE */
+
 .modal{
     display:none;
     position:fixed;
@@ -261,14 +317,35 @@ body{
 
 @media(max-width:800px){
     body{
+        display:block;
+        overflow:auto;
+    }
+
+    #gameUI{
+        width:100%;
+        height:auto;
+        min-height:100vh;
         background-size:cover;
+        background-position:center top;
+    }
+
+    #uiHotspots,
+    #rankingContent{
+        display:none;
+    }
+
+    #adminGear{
+        position:fixed;
+        top:20px;
+        right:20px;
     }
 
     .page-content{
-        padding-top:260px;
-        max-width:100%;
-        padding-left:10px;
-        padding-right:10px;
+        position:relative;
+        top:auto;
+        left:auto;
+        width:auto;
+        padding:260px 10px 20px 10px;
     }
 
     .stats{
@@ -279,111 +356,58 @@ body{
         width:auto;
         grid-template-columns:repeat(5,1fr);
     }
-
-    #rankingContent{
-        display:none;
-    }
 }
-
-/* IKONA PANELU ADMINA */
-
-#adminGear{
-    position:fixed;
-
-    top:20px;
-    right:20px;
-
-    width:50px;
-    height:50px;
-
-    border:2px solid #b8860b;
-    border-radius:50%;
-
-    background:
-        radial-gradient(
-            circle,
-            rgba(40,40,40,.95),
-            rgba(10,10,10,.95)
-        );
-
-    color:#ffd700;
-
-    font-size:24px;
-    font-weight:bold;
-
-    cursor:pointer;
-
-    z-index:2000;
-
-    box-shadow:
-        0 0 12px rgba(255,215,0,.35);
-
-    display:none;
-
-    /* DODAJ TO */
-    min-width:50px;
-    max-width:50px;
-    min-height:50px;
-    max-height:50px;
-}
-
-#adminGear:hover{
-
-    transform:rotate(30deg);
-
-    box-shadow:
-        0 0 18px rgba(255,215,0,.8);
-}
-
 </style>
 </head>
 
 <body>
 
+<div id="gameUI">
+
     <button
-    id="adminGear"
-    onclick="toggleAdminPanel()"
-    title="Panel administratora">
-    ⚙
-</button>
+        id="adminGear"
+        onclick="toggleAdminPanel()"
+        title="Panel administratora">
+        ⚙
+    </button>
 
-<div id="uiHotspots">
-
-    <button id="logoutHotspot" onclick="logout()" title="Wyloguj"></button>
-
-    <button id="rulesHotspot" onclick="showRules()" title="Regulamin"></button>
-</div>
-
-<div id="rankingContent">
-    <p>Brak punktów</p>
-    <small>Ranking uzupełni się po zdobyciu punktów.</small>
-</div>
-
-<div class="page-content">
-
-    <div class="stats">
-        <div class="stats-row">
-            <span id="freeCount" class="stats-left">Wolne: 0</span>
-            <span id="takenCount" class="stats-right">Zajęte: 0</span>
-        </div>
-
-        <div class="progress">
-            <div id="progressBar"></div>
-        </div>
-
-        <p id="progressText">Zapełnienie: 0%</p>
+    <div id="uiHotspots">
+        <button id="logoutHotspot" onclick="logout()" title="Wyloguj"></button>
+        <button id="rulesHotspot" onclick="showRules()" title="Regulamin"></button>
     </div>
 
-    <div id="adminPanel">
-        <div class="admin-header">
-            <h2>Panel administratora</h2>
-            <button class="refresh-btn" onclick="loadAdminTiles()">Odśwież</button>
-        </div>
-
-        <div id="adminTiles"></div>
+    <div id="rankingContent">
+        <p>Brak punktów</p>
+        <small>Ranking uzupełni się po zdobyciu punktów.</small>
     </div>
 
-    <div id="board"></div>
+    <div class="page-content">
+
+        <div class="stats">
+            <div class="stats-row">
+                <span id="freeCount" class="stats-left">Wolne: 0</span>
+                <span id="takenCount" class="stats-right">Zajęte: 0</span>
+            </div>
+
+            <div class="progress">
+                <div id="progressBar"></div>
+            </div>
+
+            <p id="progressText">Zapełnienie: 0%</p>
+        </div>
+
+        <div id="adminPanel">
+            <div class="admin-header">
+                <h2>Panel administratora</h2>
+                <button class="refresh-btn" onclick="loadAdminTiles()">Odśwież</button>
+            </div>
+
+            <div id="adminTiles"></div>
+        </div>
+
+        <div id="board"></div>
+
+    </div>
 
 </div>
 
