@@ -289,6 +289,13 @@ body{
     line-height:1.1;
 }
 
+.tile-title{
+    font-size:18px;
+    font-weight:bold;
+    text-align:center;
+    width:100%;
+}
+
 .tile-date{
     display:block;
     width:100%;
@@ -756,7 +763,12 @@ async function loadTiles(){
     : "";
 
             div.innerHTML = `
-    <div>#${tile.id}</div>
+    <div class="tile-title">
+    ${tile.tile_name
+        ? `#${tile.id} ${tile.tile_name}`
+        : `#${tile.id}`
+    }
+</div>
 
     <small class="tile-owner">
         ${tile.nickname || "Zajęte"}

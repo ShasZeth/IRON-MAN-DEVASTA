@@ -73,16 +73,54 @@ router.post("/unlock/:id", auth, (req, res) => {
     );
 });
 
+router.post("/rename-tile/:id", auth, (req, res) => {
+    if (!req.user.isAdmin) {
+        return res.status(403).json({
+            success:false,
+            message:"Brak uprawnień administratora"
+        });
+    }
+
+    const tileId = req.params.id;
+    const { tileName } = req.body;
+
+    db.run(
+        `
+        UPDATE tiles
+        SET tile_name = ?
+        WHERE id = ?
+        `,
+        [
+            tileName?.trim() || null,
+            tileId
+        ],
+        function(err){
+            if(err){
+                return res.status(500).json({
+                    success:false,
+                    message:"Nie udało się zmienić nazwy"
+                });
+            }
+
+            res.json({
+                success:true,
+                message:"Nazwa kafelka została zmieniona"
+            });
+        }
+    );
+});
+
 router.get("/", (req, res) => {
     db.all(
         `
         SELECT
-            tiles.id,
-            tiles.taken,
-            tiles.takenby,
-            tiles.takenat,
-            tiles.screenshot_url,
-            users.nickname
+                tiles.id,
+                tiles.taken,
+                tiles.takenby,
+                tiles.takenat,
+                tiles.screenshot_url,
+                tiles.tile_name,
+                users.nickname
         FROM tiles
         LEFT JOIN users ON users.id = tiles.takenby
         ORDER BY tiles.id

@@ -48,7 +48,7 @@ async function initDatabase() {
 
         await pool.query(`
             ALTER TABLE tiles
-            ADD COLUMN IF NOT EXISTS display_name VARCHAR(50)
+            ADD COLUMN IF NOT EXISTS tile_name VARCHAR(50)
         `);
 
         await pool.query(`
