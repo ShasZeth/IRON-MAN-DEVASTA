@@ -24,19 +24,37 @@ body{
 }
 
 .top{
+    position:fixed;
+    top:20px;
+    left:20px;
+
     display:flex;
-    justify-content:center;
-    gap:10px;
-    align-items:center;
-    margin-bottom:12px;
+    flex-direction:column;
+    gap:6px;
+
+    padding:10px;
+
+    background:rgba(15,15,15,.92);
+    border:2px solid #b8860b;
+    border-radius:10px;
+
+    box-shadow:
+        0 0 15px rgba(0,0,0,.8),
+        inset 0 0 10px rgba(255,215,0,.15);
+
+    z-index:1000;
 }
 
 button{
-    padding:10px 15px;
+    width:145px;
+    padding:8px 10px;
     cursor:pointer;
-    border:none;
-    border-radius:6px;
+    border:1px solid #b8860b;
+    border-radius:7px;
     font-weight:bold;
+    font-size:13px;
+    color:white;
+    transition:.2s;
 }
 
 .logout-btn{ background:#dc3545; color:white; }
@@ -51,6 +69,7 @@ button{
 
 .stats{
     max-width:700px;
+    width:700px;
     margin:10px auto 25px auto;
     background:rgba(20,20,20,.75);
     border:2px solid #b8860b;
@@ -123,10 +142,20 @@ button{
 }
 
 #board{
+    width:1200px;
+    max-width:1200px;
+
     display:grid;
     grid-template-columns:repeat(10,1fr);
     gap:10px;
-    margin-top:20px;
+
+    margin:20px auto 0 auto;
+}
+
+.page-content{
+    padding-top:300px;
+    max-width:1400px;
+    margin:0 auto;
 }
 
 .tile{
