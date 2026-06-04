@@ -318,7 +318,7 @@ body{
     box-shadow:0 0 18px #ffd700;
 }
 
-.taken{
+.tile.taken{
     background:linear-gradient(145deg, #7a0c0c, #d01818);
     border-color:#ffcc00;
 }
@@ -685,6 +685,9 @@ async function loadTiles(){
         div.className = "tile";
 
         if(tile.taken){
+
+            div.classList.add("taken");
+
             const dateObj = tile.takenat
     ? new Date(tile.takenat)
     : null;
