@@ -557,17 +557,25 @@ function openTileModal(tile){
         html += `<p><b>Screenshot:</b> Brak</p>`;
     }
 
-    if(isAdmin()){
-        html += `
-            <hr>
-            <button
-                class="modal-btn modal-unlock"
-                onclick="adminUnlockTile(${tile.id})"
-            >
-                Odblokuj kafelek
-            </button>
-        `;
-    }
+   if(isAdmin()){
+    html += `
+        <hr>
+
+        <button
+            class="modal-btn"
+            onclick="adminRenameTile(${tile.id}, '${tile.nickname || ""}')"
+        >
+            ✏️ Zmień nazwę
+        </button>
+
+        <button
+            class="modal-btn modal-unlock"
+            onclick="adminUnlockTile(${tile.id})"
+        >
+            Odblokuj kafelek
+        </button>
+    `;
+}
 
     document.getElementById("tileDetails").innerHTML = html;
     document.getElementById("tileModal").style.display = "block";
@@ -599,6 +607,53 @@ async function adminUnlockTile(tileId){
     await loadTiles();
 
     if(document.getElementById("adminPanel").style.display === "block"){
+        await loadAdminTiles();
+    }
+}
+
+async function adminRenameTile(tileId, currentName){
+
+    const newName = prompt(
+        `Nowa nazwa kafelka #${tileId}:`,
+        currentName
+    );
+
+    if(!newName){
+        return;
+    }
+
+    if(newName.trim() === ""){
+        alert("Nazwa nie może być pusta.");
+        return;
+    }
+
+    const token = localStorage.getItem("token");
+
+    const response = await fetch(
+        `/api/tiles/rename/${tileId}`,
+        {
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json",
+                Authorization:`Bearer ${token}`
+            },
+            body:JSON.stringify({
+                nickname:newName.trim()
+            })
+        }
+    );
+
+    const data = await response.json();
+
+    alert(data.message);
+
+    closeTileModal();
+
+    await loadTiles();
+
+    if(
+        document.getElementById("adminPanel").style.display === "block"
+    ){
         await loadAdminTiles();
     }
 }
