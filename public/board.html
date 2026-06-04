@@ -273,6 +273,46 @@ body{
     text-shadow:1px 1px 2px black;
 }
 
+.tile small{
+    display:block;
+    width:100%;
+    text-align:center;
+    line-height:1.15;
+}
+
+.tile-owner{
+    display:block;
+    width:100%;
+    text-align:center;
+    font-size:14px;
+    font-weight:bold;
+    line-height:1.1;
+}
+
+.tile-date{
+    display:block;
+    width:100%;
+    text-align:center;
+    font-size:13px;
+    line-height:1.1;
+}
+
+.tile-time{
+    display:block;
+    width:100%;
+    text-align:center;
+    font-size:13px;
+    line-height:1.1;
+}
+
+.tile-screen{
+    display:block;
+    width:100%;
+    text-align:center;
+    font-size:13px;
+    line-height:1.1;
+}
+
 .tile:hover{
     transform:scale(1.06);
     box-shadow:0 0 18px #ffd700;
@@ -645,22 +685,39 @@ async function loadTiles(){
         div.className = "tile";
 
         if(tile.taken){
-            const takenDate = tile.takenat
-                ? new Date(tile.takenat).toLocaleString("pl-PL")
-                : "";
+            const dateObj = tile.takenat
+    ? new Date(tile.takenat)
+    : null;
 
-            div.classList.add("taken");
+            const takenDate = dateObj
+    ? dateObj.toLocaleDateString("pl-PL")
+    : "";
+
+            const takenTime = dateObj
+    ? dateObj.toLocaleTimeString("pl-PL")
+    : "";
 
             div.innerHTML = `
-                <div>#${tile.id}</div>
-                <small>${tile.nickname || "Zajęte"}</small>
-                <small>${takenDate}</small>
-                ${
-                    tile.screenshot_url
-                        ? `<small>📷 Screen</small>`
-                        : `<small>Brak screena</small>`
-                }
-            `;
+    <div>#${tile.id}</div>
+
+    <small class="tile-owner">
+        ${tile.nickname || "Zajęte"}
+    </small>
+
+    <small class="tile-date">
+        ${takenDate}
+    </small>
+
+    <small class="tile-time">
+        ${takenTime}
+    </small>
+
+    ${
+        tile.screenshot_url
+            ? `<small class="tile-screen">📷 Screen</small>`
+            : `<small>Brak screena</small>`
+    }
+`;
         }else{
             div.innerHTML = `
                 <div>#${tile.id}</div>
