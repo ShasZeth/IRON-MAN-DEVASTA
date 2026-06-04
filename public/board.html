@@ -28,39 +28,38 @@ body{
     background-repeat:no-repeat;
 }
 
-/* HOTSPOTY MENU */
+/* PRZYCISKI MENU */
 
-#uiHotspots{
+#logoutBtn,
+#rulesBtn{
     position:absolute;
-    inset:0;
-    z-index:1000;
-    pointer-events:none;
-}
-
-#uiHotspots button{
-    position:absolute;
-    background:rgba(255,0,0,.25);
-    border:2px solid red;
+    border:none;
     cursor:pointer;
-    pointer-events:auto;
+    z-index:1500;
+
+    background:transparent;
+    opacity:0;
 }
 
-#logoutHotspot{
+/* WYLOGUJ */
+#logoutBtn{
     left:42px;
-    top:251px;
-    width:241px;
-    height:83px;
+    top:302px;
+    width:252px;
+    height:88px;
 }
 
-#rulesHotspot{
+/* REGULAMIN */
+#rulesBtn{
     left:42px;
-    top:393px;
-    width:241px;
-    height:83px;
+    top:462px;
+    width:252px;
+    height:88px;
 }
 
-#logoutHotspot:hover,
-#rulesHotspot:hover{
+#logoutBtn:hover,
+#rulesBtn:hover{
+    opacity:1;
     border-radius:12px;
     background:rgba(255,215,0,.08);
     box-shadow:
@@ -332,7 +331,8 @@ body{
         background-position:center top;
     }
 
-    #uiHotspots,
+    #logoutBtn,
+    #rulesBtn,
     #rankingContent{
         display:none;
     }
@@ -374,10 +374,8 @@ body{
         ⚙
     </button>
 
-    <div id="uiHotspots">
-        <button id="logoutHotspot" onclick="logout()" title="Wyloguj"></button>
-        <button id="rulesHotspot" onclick="showRules()" title="Regulamin"></button>
-    </div>
+    <button id="logoutBtn" onclick="logout()" title="Wyloguj"></button>
+    <button id="rulesBtn" onclick="showRules()" title="Regulamin"></button>
 
     <div id="rankingContent">
         <p>Brak punktów</p>
