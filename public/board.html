@@ -275,20 +275,66 @@ body{
         display:none;
     }
 }
+
+/* IKONA PANELU ADMINA */
+
+#adminGear{
+    position:fixed;
+
+    top:25px;
+    right:25px;
+
+    width:50px;
+    height:50px;
+
+    border:2px solid #b8860b;
+    border-radius:50%;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(40,40,40,.95),
+            rgba(10,10,10,.95)
+        );
+
+    color:#ffd700;
+
+    font-size:24px;
+    font-weight:bold;
+
+    cursor:pointer;
+
+    z-index:2000;
+
+    box-shadow:
+        0 0 12px rgba(255,215,0,.35);
+
+    display:none;
+}
+
+#adminGear:hover{
+
+    transform:rotate(30deg);
+
+    box-shadow:
+        0 0 18px rgba(255,215,0,.8);
+}
+
 </style>
 </head>
 
 <body>
 
-<div id="uiHotspots">
-    <button id="logoutHotspot" onclick="logout()" title="Wyloguj"></button>
-
     <button
-        id="adminHotspot"
-        onclick="toggleAdminPanel()"
-        title="Panel admina"
-        style="display:none;">
-    </button>
+    id="adminGear"
+    onclick="toggleAdminPanel()"
+    title="Panel administratora">
+    ⚙
+</button>
+
+<div id="uiHotspots">
+
+    <button id="logoutHotspot" onclick="logout()" title="Wyloguj"></button>
 
     <button id="rulesHotspot" onclick="showRules()" title="Regulamin"></button>
 </div>
@@ -375,9 +421,13 @@ function isAdmin(){
 }
 
 function showAdminButton(){
+
     if(isAdmin()){
-        document.getElementById("adminHotspot").style.display = "block";
+
+        document.getElementById("adminGear").style.display = "block";
+
     }
+
 }
 
 function closeTileModal(){
