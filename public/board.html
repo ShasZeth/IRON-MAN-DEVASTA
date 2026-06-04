@@ -19,10 +19,8 @@ body{
     background-attachment:fixed;
 }
 
-.header{
-    text-align:center;
-    margin-top:430px;
-    margin-bottom:12px;
+.page-content{
+    padding-top:430px;
 }
 
 .top{
@@ -30,6 +28,7 @@ body{
     justify-content:center;
     gap:10px;
     align-items:center;
+    margin-bottom:12px;
 }
 
 button{
@@ -40,20 +39,9 @@ button{
     font-weight:bold;
 }
 
-.logout-btn{
-    background:#dc3545;
-    color:white;
-}
-
-.admin-btn{
-    background:#6f42c1;
-    color:white;
-}
-
-.refresh-btn{
-    background:#2196f3;
-    color:white;
-}
+.logout-btn{ background:#dc3545; color:white; }
+.admin-btn{ background:#6f42c1; color:white; }
+.refresh-btn{ background:#2196f3; color:white; }
 
 .unlock-btn,
 .modal-unlock{
@@ -79,13 +67,8 @@ button{
     font-weight:bold;
 }
 
-.stats-left{
-    color:#90ee90;
-}
-
-.stats-right{
-    color:#ffcc66;
-}
+.stats-left{ color:#90ee90; }
+.stats-right{ color:#ffcc66; }
 
 .progress{
     width:100%;
@@ -229,8 +212,8 @@ button{
 }
 
 @media(max-width:800px){
-    .header{
-        margin-top:180px;
+    .page-content{
+        padding-top:260px;
     }
 
     #board{
@@ -242,49 +225,52 @@ button{
 
 <body>
 
-<div class="top">
+<div class="page-content">
 
-    <button class="logout-btn" onclick="logout()">
-        Wyloguj
-    </button>
+    <div class="top">
 
-    <button
-        id="adminButton"
-        class="admin-btn"
-        onclick="toggleAdminPanel()"
-        style="display:none;"
-    >
-        Panel admina
-    </button>
+        <button class="logout-btn" onclick="logout()">
+            Wyloguj
+        </button>
+
+        <button
+            id="adminButton"
+            class="admin-btn"
+            onclick="toggleAdminPanel()"
+            style="display:none;"
+        >
+            Panel admina
+        </button>
 
     </div>
+
+    <div class="stats">
+
+        <div class="stats-row">
+            <span id="freeCount" class="stats-left">Wolne: 0</span>
+            <span id="takenCount" class="stats-right">Zajęte: 0</span>
+        </div>
+
+        <div class="progress">
+            <div id="progressBar"></div>
+        </div>
+
+        <p id="progressText">Zapełnienie: 0%</p>
+
+    </div>
+
+    <div id="adminPanel">
+        <div class="admin-header">
+            <h2>Panel administratora</h2>
+            <button class="refresh-btn" onclick="loadAdminTiles()">Odśwież</button>
+        </div>
+
+        <div id="adminTiles"></div>
+    </div>
+
+    <div id="board"></div>
+
 </div>
-
-<div class="stats">
-
-    <div class="stats-row">
-        <span id="freeCount" class="stats-left">Wolne: 0</span>
-        <span id="takenCount" class="stats-right">Zajęte: 0</span>
-    </div>
-
-    <div class="progress">
-        <div id="progressBar"></div>
-    </div>
-
-    <p id="progressText">Zapełnienie: 0%</p>
-
-</div>
-
-<div id="adminPanel">
-    <div class="admin-header">
-        <h2>Panel administratora</h2>
-        <button class="refresh-btn" onclick="loadAdminTiles()">Odśwież</button>
-    </div>
-
-    <div id="adminTiles"></div>
-</div>
-
-<div id="board"></div>
 
 <div id="tileModal" class="modal">
     <div class="modal-content">
@@ -319,12 +305,10 @@ function isAdmin(){
 }
 
 function showAdminButton(){
-
     if(isAdmin()){
         document.getElementById("adminButton").style.display =
             "inline-block";
     }
-
 }
 
 function closeTileModal(){
@@ -406,10 +390,9 @@ async function adminUnlockTile(tileId){
 }
 
 async function toggleAdminPanel(){
-
-if(!isAdmin()){
-    return;
-}
+    if(!isAdmin()){
+        return;
+    }
 
     const panel = document.getElementById("adminPanel");
 
