@@ -23,9 +23,11 @@ body{
     padding-top:300px;
     max-width:1400px;
     margin:0 auto;
+    padding-left:70px;
+    padding-right:70px;
 }
 
-/* MENU RPG */
+/* LEWE MENU RPG */
 .top{
     position:fixed;
     top:20px;
@@ -107,10 +109,6 @@ body{
     background:linear-gradient(180deg, #8c52ff, #5a2fb3);
 }
 
-.ranking-btn{
-    background:linear-gradient(180deg, #1f7a1f, #0d4d0d);
-}
-
 .rules-btn{
     background:linear-gradient(180deg, #9a6a00, #6f4d00);
 }
@@ -124,6 +122,65 @@ body{
 .modal-unlock{
     background:#ff9800;
     color:white;
+}
+
+/* PRAWA RAMKA RANKINGU */
+#rankingPanel{
+    position:fixed;
+    top:20px;
+    right:20px;
+
+    width:220px;
+    padding:15px;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(35,35,35,.98),
+            rgba(10,10,10,.98)
+        );
+
+    border:2px solid #b8860b;
+    border-radius:12px;
+
+    box-shadow:
+        0 0 20px rgba(0,0,0,.9),
+        inset 0 0 12px rgba(255,215,0,.15);
+
+    z-index:9999;
+}
+
+#rankingPanel::before{
+    content:"";
+    position:absolute;
+    top:6px;
+    left:6px;
+    right:6px;
+    bottom:6px;
+    border:1px solid rgba(255,215,0,.35);
+    border-radius:8px;
+    pointer-events:none;
+}
+
+#rankingPanel h2{
+    text-align:center;
+    color:#ffd700;
+    margin:0 0 15px 0;
+    font-size:20px;
+    text-shadow:0 0 10px rgba(255,215,0,.7);
+}
+
+#rankingList{
+    text-align:center;
+    color:white;
+    font-size:14px;
+}
+
+.ranking-row{
+    display:flex;
+    justify-content:space-between;
+    padding:8px 0;
+    border-bottom:1px solid rgba(255,215,0,.15);
 }
 
 .stats{
@@ -203,11 +260,9 @@ body{
 #board{
     width:1200px;
     max-width:1200px;
-
     display:grid;
     grid-template-columns:repeat(10,1fr);
     gap:10px;
-
     margin:20px auto 0 auto;
 }
 
@@ -296,9 +351,18 @@ body{
 @media(max-width:800px){
     .page-content{
         padding-top:260px;
+        padding-left:0;
+        padding-right:0;
     }
 
     .top{
+        position:static;
+        width:auto;
+        max-width:220px;
+        margin:0 auto 20px auto;
+    }
+
+    #rankingPanel{
         position:static;
         width:auto;
         max-width:220px;
@@ -340,14 +404,19 @@ body{
             Panel admina
         </button>
 
-        <button class="ranking-btn" onclick="toggleRanking()">
-            Ranking
-        </button>
-
         <button class="rules-btn" onclick="showRules()">
             Regulamin
         </button>
 
+    </div>
+
+    <div id="rankingPanel">
+        <h2>RANKING</h2>
+
+        <div id="rankingList">
+            <p>Brak punktów</p>
+            <small>Ranking uzupełni się po zdobyciu punktów.</small>
+        </div>
     </div>
 
     <div class="stats">
@@ -382,16 +451,6 @@ body{
     <div class="modal-content">
         <span class="close" onclick="closeTileModal()">×</span>
         <div id="tileDetails"></div>
-    </div>
-</div>
-
-<div id="rankingModal" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="closeRanking()">×</span>
-        <h2>Ranking</h2>
-        <div id="rankingContent">
-            Ranking zostanie podłączony w kolejnym kroku.
-        </div>
     </div>
 </div>
 
@@ -445,14 +504,6 @@ function showAdminButton(){
 
 function closeTileModal(){
     document.getElementById("tileModal").style.display = "none";
-}
-
-function toggleRanking(){
-    document.getElementById("rankingModal").style.display = "block";
-}
-
-function closeRanking(){
-    document.getElementById("rankingModal").style.display = "none";
 }
 
 function showRules(){
@@ -700,15 +751,10 @@ async function loadTiles(){
 
 window.onclick = function(event){
     const tileModal = document.getElementById("tileModal");
-    const rankingModal = document.getElementById("rankingModal");
     const rulesModal = document.getElementById("rulesModal");
 
     if(event.target === tileModal){
         closeTileModal();
-    }
-
-    if(event.target === rankingModal){
-        closeRanking();
     }
 
     if(event.target === rulesModal){
