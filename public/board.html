@@ -621,7 +621,7 @@ async function adminUnlockTile(tileId){
 async function adminRenameTile(tileId, currentName){
 
     const newName = prompt(
-        `Nowa nazwa kafelka #${tileId}:`,
+        `Podaj dopisek do kafelka #${tileId}:`,
         currentName
     );
 
@@ -637,7 +637,7 @@ async function adminRenameTile(tileId, currentName){
     const token = localStorage.getItem("token");
 
     const response = await fetch(
-        `/api/tiles/rename/${tileId}`,
+        `/api/tiles/rename-tile/${tileId}`,
         {
             method:"POST",
             headers:{
@@ -645,7 +645,7 @@ async function adminRenameTile(tileId, currentName){
                 Authorization:`Bearer ${token}`
             },
             body:JSON.stringify({
-                nickname:newName.trim()
+                tileName:newName.trim()
             })
         }
     );
