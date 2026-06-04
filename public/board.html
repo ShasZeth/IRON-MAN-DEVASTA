@@ -7,186 +7,86 @@
 <style>
 body{
     font-family:Arial, sans-serif;
-    margin:20px;
+    margin:0;
+    min-height:100vh;
     color:white;
-
-    background:
-        linear-gradient(rgba(0,0,0,.72), rgba(0,0,0,.84)),
-        url("/img/iron-man-devasta-bg.png");
-
-    background-size:cover;
-    background-position:center top;
+    background:url("/img/iron-man-devasta-ui.png");
+    background-size:100% 100%;
+    background-position:center center;
+    background-repeat:no-repeat;
     background-attachment:fixed;
+    overflow-x:hidden;
 }
 
-.page-content{
-    padding-top:300px;
-    max-width:1400px;
-    margin:0 auto;
-    padding-left:70px;
-    padding-right:70px;
-}
-
-/* LEWE MENU RPG */
-.top{
+#uiHotspots{
     position:fixed;
-    top:20px;
-    left:20px;
-
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-
-    width:170px;
-    padding:12px;
-
-    background:
-        linear-gradient(
-            180deg,
-            rgba(35,35,35,.98),
-            rgba(10,10,10,.98)
-        );
-
-    border:2px solid #b8860b;
-    border-radius:12px;
-
-    box-shadow:
-        0 0 20px rgba(0,0,0,.9),
-        inset 0 0 12px rgba(255,215,0,.15);
-
-    z-index:9999;
-}
-
-.top::before{
-    content:"";
-    position:absolute;
-    top:6px;
-    left:6px;
-    right:6px;
-    bottom:6px;
-    border:1px solid rgba(255,215,0,.35);
-    border-radius:8px;
+    inset:0;
+    z-index:1000;
     pointer-events:none;
 }
 
-.menu-title{
-    text-align:center;
-    color:#ffd700;
-    font-size:18px;
-    font-weight:bold;
-    padding-bottom:8px;
-    margin-bottom:5px;
-    border-bottom:1px solid rgba(255,215,0,.4);
-    text-shadow:0 0 10px rgba(255,215,0,.7);
-}
-
-.top button{
-    width:100%;
-    height:42px;
-
-    border:1px solid #b8860b;
-    border-radius:8px;
-
-    color:white;
-    font-size:13px;
-    font-weight:bold;
-
+#uiHotspots button{
+    position:absolute;
+    background:transparent;
+    border:none;
     cursor:pointer;
-    transition:.2s;
+    pointer-events:auto;
 }
 
-.top button:hover{
-    transform:translateY(-1px);
-    border-color:#ffd700;
-    box-shadow:0 0 10px rgba(255,215,0,.8);
+/* Dopasowane do grafiki 1792x1024 */
+#logoutHotspot{
+    left:4%;
+    top:30%;
+    width:12%;
+    height:8%;
 }
 
-.logout-btn{
-    background:linear-gradient(180deg, #d94b4b, #8b0000);
+#adminHotspot{
+    left:4%;
+    top:41%;
+    width:12%;
+    height:8%;
 }
 
-.admin-btn{
-    background:linear-gradient(180deg, #8c52ff, #5a2fb3);
+#rulesHotspot{
+    left:4%;
+    top:52%;
+    width:12%;
+    height:8%;
 }
 
-.rules-btn{
-    background:linear-gradient(180deg, #9a6a00, #6f4d00);
-}
-
-.refresh-btn{
-    background:#2196f3;
-    color:white;
-}
-
-.unlock-btn,
-.modal-unlock{
-    background:#ff9800;
-    color:white;
-}
-
-/* PRAWA RAMKA RANKINGU */
-#rankingPanel{
+#rankingContent{
     position:fixed;
-    top:20px;
-    right:20px;
-
-    width:220px;
-    padding:15px;
-
-    background:
-        linear-gradient(
-            180deg,
-            rgba(35,35,35,.98),
-            rgba(10,10,10,.98)
-        );
-
-    border:2px solid #b8860b;
-    border-radius:12px;
-
-    box-shadow:
-        0 0 20px rgba(0,0,0,.9),
-        inset 0 0 12px rgba(255,215,0,.15);
-
-    z-index:9999;
-}
-
-#rankingPanel::before{
-    content:"";
-    position:absolute;
-    top:6px;
-    left:6px;
-    right:6px;
-    bottom:6px;
-    border:1px solid rgba(255,215,0,.35);
-    border-radius:8px;
-    pointer-events:none;
-}
-
-#rankingPanel h2{
-    text-align:center;
-    color:#ffd700;
-    margin:0 0 15px 0;
-    font-size:20px;
-    text-shadow:0 0 10px rgba(255,215,0,.7);
-}
-
-#rankingList{
-    text-align:center;
+    right:5.8%;
+    top:25%;
+    width:13%;
+    height:53%;
+    z-index:900;
     color:white;
     font-size:14px;
+    text-align:center;
+    overflow-y:auto;
+    padding:10px;
+    box-sizing:border-box;
 }
 
 .ranking-row{
     display:flex;
     justify-content:space-between;
+    border-bottom:1px solid rgba(255,215,0,.25);
     padding:8px 0;
-    border-bottom:1px solid rgba(255,215,0,.15);
+}
+
+.page-content{
+    padding-top:300px;
+    max-width:1200px;
+    margin:0 auto;
 }
 
 .stats{
     max-width:700px;
     width:700px;
-    margin:10px auto 25px auto;
+    margin:0 auto 25px auto;
     background:rgba(20,20,20,.75);
     border:2px solid #b8860b;
     border-radius:12px;
@@ -237,6 +137,19 @@ body{
     background:rgba(20,20,20,.9);
     border-radius:12px;
     box-shadow:0 0 15px rgba(0,0,0,.8);
+    position:relative;
+    z-index:1200;
+}
+
+.refresh-btn{
+    background:#2196f3;
+    color:white;
+}
+
+.unlock-btn,
+.modal-unlock{
+    background:#ff9800;
+    color:white;
 }
 
 .admin-header{
@@ -264,22 +177,21 @@ body{
     grid-template-columns:repeat(10,1fr);
     gap:10px;
     margin:20px auto 0 auto;
+    position:relative;
+    z-index:800;
 }
 
 .tile{
     min-height:85px;
     border:2px solid #b8860b;
     cursor:pointer;
-
     display:flex;
     flex-direction:column;
     align-items:center;
     justify-content:center;
-
     font-weight:bold;
     background:linear-gradient(145deg, #0b5f25, #168a3a);
     color:#fff3c4;
-
     transition:.2s;
     border-radius:10px;
     box-shadow:0 0 12px rgba(0,0,0,.8);
@@ -289,16 +201,6 @@ body{
 .tile:hover{
     transform:scale(1.06);
     box-shadow:0 0 18px #ffd700;
-}
-
-.tile a{
-    color:#ffd700;
-    text-decoration:none;
-    margin-top:3px;
-}
-
-.tile a:hover{
-    text-decoration:underline;
 }
 
 .taken{
@@ -349,24 +251,15 @@ body{
 }
 
 @media(max-width:800px){
+    body{
+        background-size:cover;
+    }
+
     .page-content{
         padding-top:260px;
-        padding-left:0;
-        padding-right:0;
-    }
-
-    .top{
-        position:static;
-        width:auto;
-        max-width:220px;
-        margin:0 auto 20px auto;
-    }
-
-    #rankingPanel{
-        position:static;
-        width:auto;
-        max-width:220px;
-        margin:0 auto 20px auto;
+        max-width:100%;
+        padding-left:10px;
+        padding-right:10px;
     }
 
     .stats{
@@ -377,50 +270,37 @@ body{
         width:auto;
         grid-template-columns:repeat(5,1fr);
     }
+
+    #rankingContent{
+        display:none;
+    }
 }
 </style>
 </head>
 
 <body>
 
+<div id="uiHotspots">
+    <button id="logoutHotspot" onclick="logout()" title="Wyloguj"></button>
+
+    <button
+        id="adminHotspot"
+        onclick="toggleAdminPanel()"
+        title="Panel admina"
+        style="display:none;">
+    </button>
+
+    <button id="rulesHotspot" onclick="showRules()" title="Regulamin"></button>
+</div>
+
+<div id="rankingContent">
+    <p>Brak punktów</p>
+    <small>Ranking uzupełni się po zdobyciu punktów.</small>
+</div>
+
 <div class="page-content">
 
-    <div class="top">
-
-        <div class="menu-title">
-            IRON MAN
-        </div>
-
-        <button class="logout-btn" onclick="logout()">
-            Wyloguj
-        </button>
-
-        <button
-            id="adminButton"
-            class="admin-btn"
-            onclick="toggleAdminPanel()"
-            style="display:none;"
-        >
-            Panel admina
-        </button>
-
-        <button class="rules-btn" onclick="showRules()">
-            Regulamin
-        </button>
-
-    </div>
-
-    <div id="rankingPanel">
-        <h2>RANKING</h2>
-
-        <div id="rankingList">
-            <p>Brak punktów</p>
-            <small>Ranking uzupełni się po zdobyciu punktów.</small>
-        </div>
-    </div>
-
     <div class="stats">
-
         <div class="stats-row">
             <span id="freeCount" class="stats-left">Wolne: 0</span>
             <span id="takenCount" class="stats-right">Zajęte: 0</span>
@@ -431,7 +311,6 @@ body{
         </div>
 
         <p id="progressText">Zapełnienie: 0%</p>
-
     </div>
 
     <div id="adminPanel">
@@ -497,8 +376,7 @@ function isAdmin(){
 
 function showAdminButton(){
     if(isAdmin()){
-        document.getElementById("adminButton").style.display =
-            "inline-block";
+        document.getElementById("adminHotspot").style.display = "block";
     }
 }
 
@@ -521,7 +399,6 @@ function openTileModal(tile){
 
     let html = `
         <h2>Kafelek #${tile.id}</h2>
-
         <p><b>Status:</b> ${tile.taken ? "Zajęty" : "Wolny"}</p>
         <p><b>Właściciel:</b> ${tile.nickname || "-"}</p>
         <p><b>Data zajęcia:</b> ${date}</p>
@@ -543,7 +420,6 @@ function openTileModal(tile){
     if(isAdmin()){
         html += `
             <hr>
-
             <button
                 class="modal-btn modal-unlock"
                 onclick="adminUnlockTile(${tile.id})"
@@ -580,7 +456,6 @@ async function adminUnlockTile(tileId){
     alert(data.message);
 
     closeTileModal();
-
     await loadTiles();
 
     if(document.getElementById("adminPanel").style.display === "block"){
@@ -650,17 +525,10 @@ function updateStats(tiles){
     const percent =
         total === 0 ? 0 : Math.round((taken / total) * 100);
 
-    document.getElementById("freeCount").innerText =
-        `Wolne: ${free}`;
-
-    document.getElementById("takenCount").innerText =
-        `Zajęte: ${taken}`;
-
-    document.getElementById("progressBar").style.width =
-        `${percent}%`;
-
-    document.getElementById("progressText").innerText =
-        `Zapełnienie: ${percent}%`;
+    document.getElementById("freeCount").innerText = `Wolne: ${free}`;
+    document.getElementById("takenCount").innerText = `Zajęte: ${taken}`;
+    document.getElementById("progressBar").style.width = `${percent}%`;
+    document.getElementById("progressText").innerText = `Zapełnienie: ${percent}%`;
 }
 
 async function loadTiles(){
