@@ -47,6 +47,11 @@ async function initDatabase() {
         `);
 
         await pool.query(`
+            ALTER TABLE tiles
+            ADD COLUMN IF NOT EXISTS display_name VARCHAR(50)
+        `);
+
+        await pool.query(`
             CREATE TABLE IF NOT EXISTS tile_history (
                 id SERIAL PRIMARY KEY,
                 tile_id INTEGER,
