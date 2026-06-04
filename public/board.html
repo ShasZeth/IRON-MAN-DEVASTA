@@ -21,8 +21,11 @@ body{
 
 .page-content{
     padding-top:300px;
+    max-width:1400px;
+    margin:0 auto;
 }
 
+/* MENU RPG */
 .top{
     position:fixed;
     top:20px;
@@ -30,36 +33,92 @@ body{
 
     display:flex;
     flex-direction:column;
-    gap:6px;
+    gap:8px;
 
-    padding:10px;
+    width:170px;
+    padding:12px;
 
-    background:rgba(15,15,15,.92);
+    background:
+        linear-gradient(
+            180deg,
+            rgba(35,35,35,.98),
+            rgba(10,10,10,.98)
+        );
+
     border:2px solid #b8860b;
-    border-radius:10px;
+    border-radius:12px;
 
     box-shadow:
-        0 0 15px rgba(0,0,0,.8),
-        inset 0 0 10px rgba(255,215,0,.15);
+        0 0 20px rgba(0,0,0,.9),
+        inset 0 0 12px rgba(255,215,0,.15);
 
-    z-index:1000;
+    z-index:9999;
 }
 
-button{
-    width:145px;
-    padding:8px 10px;
-    cursor:pointer;
-    border:1px solid #b8860b;
-    border-radius:7px;
+.top::before{
+    content:"";
+    position:absolute;
+    top:6px;
+    left:6px;
+    right:6px;
+    bottom:6px;
+    border:1px solid rgba(255,215,0,.35);
+    border-radius:8px;
+    pointer-events:none;
+}
+
+.menu-title{
+    text-align:center;
+    color:#ffd700;
+    font-size:18px;
     font-weight:bold;
-    font-size:13px;
+    padding-bottom:8px;
+    margin-bottom:5px;
+    border-bottom:1px solid rgba(255,215,0,.4);
+    text-shadow:0 0 10px rgba(255,215,0,.7);
+}
+
+.top button{
+    width:100%;
+    height:42px;
+
+    border:1px solid #b8860b;
+    border-radius:8px;
+
     color:white;
+    font-size:13px;
+    font-weight:bold;
+
+    cursor:pointer;
     transition:.2s;
 }
 
-.logout-btn{ background:#dc3545; color:white; }
-.admin-btn{ background:#6f42c1; color:white; }
-.refresh-btn{ background:#2196f3; color:white; }
+.top button:hover{
+    transform:translateY(-1px);
+    border-color:#ffd700;
+    box-shadow:0 0 10px rgba(255,215,0,.8);
+}
+
+.logout-btn{
+    background:linear-gradient(180deg, #d94b4b, #8b0000);
+}
+
+.admin-btn{
+    background:linear-gradient(180deg, #8c52ff, #5a2fb3);
+}
+
+.ranking-btn{
+    background:linear-gradient(180deg, #1f7a1f, #0d4d0d);
+}
+
+.rules-btn{
+    background:linear-gradient(180deg, #9a6a00, #6f4d00);
+}
+
+.refresh-btn{
+    background:#2196f3;
+    color:white;
+}
 
 .unlock-btn,
 .modal-unlock{
@@ -152,12 +211,6 @@ button{
     margin:20px auto 0 auto;
 }
 
-.page-content{
-    padding-top:300px;
-    max-width:1400px;
-    margin:0 auto;
-}
-
 .tile{
     min-height:85px;
     border:2px solid #b8860b;
@@ -245,7 +298,19 @@ button{
         padding-top:260px;
     }
 
+    .top{
+        position:static;
+        width:auto;
+        max-width:220px;
+        margin:0 auto 20px auto;
+    }
+
+    .stats{
+        width:auto;
+    }
+
     #board{
+        width:auto;
         grid-template-columns:repeat(5,1fr);
     }
 }
@@ -258,6 +323,10 @@ button{
 
     <div class="top">
 
+        <div class="menu-title">
+            IRON MAN
+        </div>
+
         <button class="logout-btn" onclick="logout()">
             Wyloguj
         </button>
@@ -269,6 +338,14 @@ button{
             style="display:none;"
         >
             Panel admina
+        </button>
+
+        <button class="ranking-btn" onclick="toggleRanking()">
+            Ranking
+        </button>
+
+        <button class="rules-btn" onclick="showRules()">
+            Regulamin
         </button>
 
     </div>
@@ -308,6 +385,32 @@ button{
     </div>
 </div>
 
+<div id="rankingModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeRanking()">×</span>
+        <h2>Ranking</h2>
+        <div id="rankingContent">
+            Ranking zostanie podłączony w kolejnym kroku.
+        </div>
+    </div>
+</div>
+
+<div id="rulesModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeRules()">×</span>
+
+        <h2>Regulamin</h2>
+
+        <ul>
+            <li>Każdy użytkownik może zajmować wolne kafelki.</li>
+            <li>Do zajęcia kafelka wymagany jest link do screenshota.</li>
+            <li>Jeden zajęty kafelek nie może zostać zajęty ponownie przez innego użytkownika.</li>
+            <li>Administrator może odblokować zajęty kafelek.</li>
+            <li>Fałszywe lub błędne screenshoty mogą zostać usunięte przez administratora.</li>
+        </ul>
+    </div>
+</div>
+
 <script>
 function logout(){
     localStorage.removeItem("token");
@@ -342,6 +445,22 @@ function showAdminButton(){
 
 function closeTileModal(){
     document.getElementById("tileModal").style.display = "none";
+}
+
+function toggleRanking(){
+    document.getElementById("rankingModal").style.display = "block";
+}
+
+function closeRanking(){
+    document.getElementById("rankingModal").style.display = "none";
+}
+
+function showRules(){
+    document.getElementById("rulesModal").style.display = "block";
+}
+
+function closeRules(){
+    document.getElementById("rulesModal").style.display = "none";
 }
 
 function openTileModal(tile){
@@ -580,10 +699,20 @@ async function loadTiles(){
 }
 
 window.onclick = function(event){
-    const modal = document.getElementById("tileModal");
+    const tileModal = document.getElementById("tileModal");
+    const rankingModal = document.getElementById("rankingModal");
+    const rulesModal = document.getElementById("rulesModal");
 
-    if(event.target === modal){
+    if(event.target === tileModal){
         closeTileModal();
+    }
+
+    if(event.target === rankingModal){
+        closeRanking();
+    }
+
+    if(event.target === rulesModal){
+        closeRules();
     }
 };
 
