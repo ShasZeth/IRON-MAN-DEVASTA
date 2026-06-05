@@ -582,6 +582,7 @@ function openTileModal(tile){
         <p><b>Status:</b> ${tile.taken ? "Zajęty" : "Wolny"}</p>
         <p><b>Właściciel:</b> ${tile.nickname || "-"}</p>
         <p><b>Data zajęcia:</b> ${date}</p>
+        <p><b>Punkty za zdobycie:</b> ${tile.points || 0} pkt</p>
     `;
 
     if(tile.screenshot_url){
