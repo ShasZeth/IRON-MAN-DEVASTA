@@ -214,7 +214,7 @@ router.get("/ranking/points", async (req, res) => {
                 COALESCE(SUM(tiles.points), 0) AS tile_points,
                 COALESCE(SUM(tiles.points), 0) + COALESCE(users.bonus_points, 0) AS total_points
             FROM users
-            LEFT JOIN tiles ON tiles.user_id = users.id AND tiles.taken = true
+            LEFT JOIN tiles ON tiles.takenby = users.id AND tiles.taken = true
             GROUP BY users.id, users.nickname, users.bonus_points
             ORDER BY total_points DESC
         `);
@@ -230,29 +230,26 @@ router.get("/ranking/points", async (req, res) => {
 
 router.get("/", (req, res) => {
     db.all(
-        `
-        SELECT
-                tiles.id,
-                tiles.taken,
-                tiles.takenby,
-                tiles.takenat,
-                tiles.screenshot_url,
-                tiles.tile_name,
-                tiles.points,
-                users.nickname
-                users.bonus_points
-        FROM tiles
-        LEFT JOIN users ON users.id = tiles.takenby
-        ORDER BY tiles.id
-        `,
-        [],
-        (err, rows) => {
-            if (err) {
-                return res.status(500).json({ success: false });
-            }
-
-            res.json(rows);
+    `
+    SELECT 
+        tiles.*,
+        users.nickname,
+        COALESCE(users.bonus_points, 0) AS bonus_points
+    FROM tiles
+    LEFT JOIN users ON users.id = tiles.takenby
+    ORDER BY tiles.id
+    `,
+    [],
+    (err, rows) => {
+        if(err){
+            console.error("LOAD TILES ERROR:", err);
+            return res.status(500).json({
+                message:"Błąd pobierania kafelków."
+            });
         }
+
+        res.json(rows);
+      }
     );
 });
 
