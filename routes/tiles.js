@@ -240,6 +240,7 @@ router.get("/", (req, res) => {
                 tiles.tile_name,
                 tiles.points,
                 users.nickname
+                users.bonus_points
         FROM tiles
         LEFT JOIN users ON users.id = tiles.takenby
         ORDER BY tiles.id
