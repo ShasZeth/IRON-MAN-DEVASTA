@@ -182,7 +182,7 @@ router.post("/users/bonus-points", async (req, res) => {
         });
 
     } catch(error){
-        console.error(error);
+        console.error("BONUS POINTS ERROR:", error);
         res.status(500).json({
             message: "Błąd zapisu bonusowych punktów."
         });
