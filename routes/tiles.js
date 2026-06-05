@@ -172,14 +172,29 @@ router.post("/users/bonus-points", async (req, res) => {
             });
         }
 
-        await pool.query(
-            "UPDATE users SET bonus_points = $1 WHERE nickname = $2",
-            [points, nickname]
-        );
+        db.run(
+    `
+    UPDATE users
+    SET bonus_points = ?
+    WHERE nickname = ?
+    `,
+    [points, nickname],
+    function(err){
+        if(err){
+            console.error(err);
 
-        res.json({
-            message: "Bonusowe punkty użytkownika zostały zapisane."
+            return res.status(500).json({
+                message:"Błąd zapisu bonusowych punktów."
+            });
+        }
+
+        return res.json({
+            message:"Bonusowe punkty użytkownika zostały zapisane."
         });
+    }
+);
+
+return;
 
     } catch(error){
         console.error("BONUS POINTS ERROR:", error);
