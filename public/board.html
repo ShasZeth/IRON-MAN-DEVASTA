@@ -878,8 +878,8 @@ async function loadTiles(){
     const tiles = await response.json();
 
     updateStats(tiles);
-    await loadPointsRanking();
-    
+    updateRanking(tiles);
+
     const board = document.getElementById("board");
     board.innerHTML = "";
 
