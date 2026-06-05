@@ -826,67 +826,83 @@ async function loadTiles(){
     board.innerHTML = "";
 
     tiles.forEach(tile => {
-        const div = document.createElement("div");
-        div.className = "tile";
+    const div = document.createElement("div");
+    div.className = "tile";
 
-        if(tile.taken){
+    if(tile.taken){
 
-            div.classList.add("taken");
+        div.classList.add("taken");
 
-            const dateObj = tile.takenat
-    ? new Date(tile.takenat)
-    : null;
+        const dateObj = tile.takenat
+            ? new Date(tile.takenat)
+            : null;
 
-            const takenDate = dateObj
-    ? dateObj.toLocaleDateString("pl-PL")
-    : "";
+        const takenDate = dateObj
+            ? dateObj.toLocaleDateString("pl-PL")
+            : "";
 
-            const takenTime = dateObj
-    ? dateObj.toLocaleTimeString("pl-PL")
-    : "";
+        const takenTime = dateObj
+            ? dateObj.toLocaleTimeString("pl-PL")
+            : "";
 
-            div.innerHTML = `
-    <div class="tile-title">
-    ${tile.tile_name
-        ? `#${tile.id} ${tile.tile_name}`
-        : `#${tile.id}`
-    }
-</div>
+        div.innerHTML = `
+            <div class="tile-title">
+                ${tile.tile_name
+                    ? `#${tile.id} ${tile.tile_name}`
+                    : `#${tile.id}`
+                }
+            </div>
 
-    <small class="tile-owner">
-        ${tile.nickname || "Zajęte"}
-    </small>
+            <small class="tile-owner">
+                ${tile.nickname || "Zajęte"}
+            </small>
 
-    <small class="tile-date">
-        ${takenDate}
-    </small>
+            <small class="tile-date">
+                ${takenDate}
+            </small>
 
-    <small class="tile-time">
-        ${takenTime}
-    </small>
+            <small class="tile-time">
+                ${takenTime}
+            </small>
 
-    ${
-        tile.screenshot_url
-            ? `<small class="tile-screen">📷 Screen</small>`
-            : `<small>Brak screena</small>`
-    }
-`;
-        }else{
-    div.innerHTML = `
-        <div class="tile-title">
-            ${tile.tile_name
-                ? `#${tile.id} ${tile.tile_name}`
-                : `#${tile.id}`
+            ${
+                tile.screenshot_url
+                    ? `<small class="tile-screen">📷 Screen</small>`
+                    : `<small>Brak screena</small>`
             }
-        </div>
+        `;
 
-        <small>Wolny</small>
+    }else{
 
-        <small class="tile-points-free">
-            ${tile.points || 0} pkt
-        </small>
-    `;
-}
+        div.innerHTML = `
+            <div class="tile-title">
+                ${tile.tile_name
+                    ? `#${tile.id} ${tile.tile_name}`
+                    : `#${tile.id}`
+                }
+            </div>
+
+            <small>Wolny</small>
+
+            <small class="tile-points-free">
+                ${tile.points || 0} pkt
+            </small>
+        `;
+    }
+
+    if(isAdmin()){
+        const editBtn = document.createElement("button");
+        editBtn.className = "tile-edit-btn";
+        editBtn.innerText = "✏️";
+        editBtn.title = "Edytuj kafelek";
+
+        editBtn.onclick = (event) => {
+            event.stopPropagation();
+            openTileModal(tile);
+        };
+
+        div.appendChild(editBtn);
+    }
 
         div.onclick = async () => {
             const token = localStorage.getItem("token");
