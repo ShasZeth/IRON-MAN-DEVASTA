@@ -108,7 +108,7 @@ router.post("/rename-tile/:id", auth, (req, res) => {
             });
         }
     );
-});
+})
 
 router.post("/points/:id", auth, (req, res) => {
 
