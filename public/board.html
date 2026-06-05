@@ -665,12 +665,7 @@ async function adminRenameTile(tileId, currentName){
         currentName
     );
 
-    if(!newName){
-        return;
-    }
-
-    if(newName.trim() === ""){
-        alert("Nazwa nie może być pusta.");
+     if(newName === null){
         return;
     }
 
