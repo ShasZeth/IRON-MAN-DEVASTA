@@ -876,6 +876,7 @@ function updateRanking(tiles){
             <strong>
                 ${player.totalPoints} pkt
                 ${isAdmin() ? `
+                <button
                     onclick="adminSetUserBonusPoints('${player.nickname}', ${player.bonusPoints || 0})">
                         ⭐
                     </button>
