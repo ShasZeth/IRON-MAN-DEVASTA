@@ -855,6 +855,7 @@ async function loadTiles(){
     const tiles = await response.json();
 
     updateStats(tiles);
+    updateRanking(tiles);
 
     const board = document.getElementById("board");
     board.innerHTML = "";
