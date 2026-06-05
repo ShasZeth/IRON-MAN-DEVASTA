@@ -47,13 +47,13 @@ async function initDatabase() {
         `);
 
         await pool.query(`
-            ALTER TABLE tiles
-            ADD COLUMN IF NOT EXISTS tile_name VARCHAR(50)
+            ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS bonus_points INTEGER DEFAULT 0
         `);
 
         await pool.query(`
-            ALTER TABLE users
-            ADD COLUMN IF NOT EXISTS bonus_points INTEGER DEFAULT 0
+            ALTER TABLE tiles
+            ADD COLUMN IF NOT EXISTS tile_name VARCHAR(50)
         `);
 
         await pool.query(`

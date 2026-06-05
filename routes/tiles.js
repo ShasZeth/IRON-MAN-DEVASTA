@@ -195,7 +195,7 @@ router.get("/ranking/points", async (req, res) => {
                 COALESCE(SUM(tiles.points), 0) AS tile_points,
                 COALESCE(SUM(tiles.points), 0) + COALESCE(users.bonus_points, 0) AS total_points
             FROM users
-            LEFT JOIN tiles ON tiles.user_id = users.id AND tiles.taken = 1
+            LEFT JOIN tiles ON tiles.user_id = users.id AND tiles.taken = true
             GROUP BY users.id, users.nickname, users.bonus_points
             ORDER BY total_points DESC
         `);
