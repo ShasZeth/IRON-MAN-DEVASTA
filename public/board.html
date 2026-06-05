@@ -812,6 +812,29 @@ function updateStats(tiles){
     document.getElementById("progressText").innerText = `Zapełnienie: ${percent}%`;
 }
 
+async function loadPointsRanking(){
+    const response = await fetch("/api/tiles/ranking/points");
+    const ranking = await response.json();
+
+    const rankingContent =
+        document.getElementById("rankingContent");
+
+    if(!Array.isArray(ranking) || ranking.length === 0){
+        rankingContent.innerHTML = `
+            <p>Brak punktów</p>
+            <small>Ranking uzupełni się po zdobyciu punktów.</small>
+        `;
+        return;
+    }
+
+    rankingContent.innerHTML = ranking.map((player, index) => `
+        <div class="ranking-row">
+            <span>${index + 1}. ${player.nickname}</span>
+            <strong>${player.total_points} pkt</strong>
+        </div>
+    `).join("");
+}
+
 function updateRanking(tiles){
     const ranking = {};
 
@@ -855,8 +878,8 @@ async function loadTiles(){
     const tiles = await response.json();
 
     updateStats(tiles);
-    updateRanking(tiles);
-
+    await loadPointsRanking();
+    
     const board = document.getElementById("board");
     board.innerHTML = "";
 

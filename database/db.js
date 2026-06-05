@@ -52,6 +52,11 @@ async function initDatabase() {
         `);
 
         await pool.query(`
+            ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS bonus_points INTEGER DEFAULT 0
+        `);
+
+        await pool.query(`
             CREATE TABLE IF NOT EXISTS tile_history (
                 id SERIAL PRIMARY KEY,
                 tile_id INTEGER,

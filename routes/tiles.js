@@ -154,6 +154,66 @@ router.post("/points/:id", auth, (req, res) => {
     );
 });
 
+router.post("/users/:userId/bonus-points", verifyToken, async (req, res) => {
+    try {
+        if(!req.user.isAdmin){
+            return res.status(403).json({
+                message: "Brak uprawnień administratora."
+            });
+        }
+
+        const { userId } = req.params;
+        const { bonusPoints } = req.body;
+
+        const points = Number(bonusPoints);
+
+        if(!Number.isInteger(points)){
+            return res.status(400).json({
+                message: "Punkty muszą być liczbą całkowitą."
+            });
+        }
+
+        await pool.query(
+            "UPDATE users SET bonus_points = $1 WHERE id = $2",
+            [points, userId]
+        );
+
+        res.json({
+            message: "Bonusowe punkty użytkownika zostały zapisane."
+        });
+
+    } catch(error){
+        console.error(error);
+        res.status(500).json({
+            message: "Błąd zapisu bonusowych punktów."
+        });
+    }
+});
+
+router.get("/ranking/points", async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT 
+                users.id,
+                users.nickname,
+                COALESCE(users.bonus_points, 0) AS bonus_points,
+                COALESCE(SUM(tiles.points), 0) AS tile_points,
+                COALESCE(SUM(tiles.points), 0) + COALESCE(users.bonus_points, 0) AS total_points
+            FROM users
+            LEFT JOIN tiles ON tiles.user_id = users.id AND tiles.taken = 1
+            GROUP BY users.id, users.nickname, users.bonus_points
+            ORDER BY total_points DESC
+        `);
+
+        res.json(result.rows);
+    } catch(error){
+        console.error(error);
+        res.status(500).json({
+            message: "Błąd pobierania rankingu punktowego."
+        });
+    }
+});
+
 router.get("/", (req, res) => {
     db.all(
         `
