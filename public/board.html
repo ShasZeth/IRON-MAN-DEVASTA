@@ -841,19 +841,24 @@ function updateRanking(tiles){
     tiles.forEach(tile => {
         if(tile.taken && tile.nickname){
             if(!ranking[tile.nickname]){
-                ranking[tile.nickname] = 0;
+                ranking[tile.nickname] = {
+                    nickname: tile.nickname,
+                    points: 0,
+                    userId: tile.user_id || tile.userid || null,
+                    bonusPoints: Number(tile.bonus_points || 0)
+                };
             }
 
-            ranking[tile.nickname] += Number(tile.points || 0);
+            ranking[tile.nickname].points += Number(tile.points || 0);
         }
     });
 
-    const rankingArray = Object.entries(ranking)
-        .map(([nickname, points]) => ({
-            nickname,
-            points
+    const rankingArray = Object.values(ranking)
+        .map(player => ({
+            ...player,
+            totalPoints: player.points + player.bonusPoints
         }))
-        .sort((a, b) => b.points - a.points);
+        .sort((a, b) => b.totalPoints - a.totalPoints);
 
     const rankingContent = document.getElementById("rankingContent");
 
@@ -868,9 +873,50 @@ function updateRanking(tiles){
     rankingContent.innerHTML = rankingArray.map((player, index) => `
         <div class="ranking-row">
             <span>${index + 1}. ${player.nickname}</span>
-            <strong>${player.points} pkt</strong>
+            <strong>
+                ${player.totalPoints} pkt
+                ${isAdmin() && player.userId ? `
+                    <button onclick="adminSetUserBonusPoints(${player.userId}, '${player.nickname}', ${player.bonusPoints})">
+                        ➕
+                    </button>
+                ` : ""}
+            </strong>
         </div>
     `).join("");
+}
+
+async function adminSetUserBonusPoints(userId, nickname, currentBonusPoints){
+    const newPoints = prompt(
+        `Podaj bonusowe punkty dla użytkownika ${nickname}:`,
+        currentBonusPoints || 0
+    );
+
+    if(newPoints === null){
+        return;
+    }
+
+    const parsedPoints = Number(newPoints);
+
+    if(!Number.isInteger(parsedPoints)){
+        alert("Punkty muszą być liczbą całkowitą.");
+        return;
+    }
+
+    const response = await fetch(`/api/tiles/users/${userId}/bonus-points`, {
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+            bonusPoints:parsedPoints
+        })
+    });
+
+    const data = await response.json();
+
+    alert(data.message);
+
+    await loadTiles();
 }
 
 async function loadTiles(){
