@@ -142,26 +142,59 @@ body{
     justify-content:space-between;
     align-items:center;
 
-    padding:6px 4px;
+    padding:7px 4px;
     margin-bottom:6px;
 
     border-bottom:1px solid rgba(255,215,0,0.25);
 
     color:#fff;
-    font-size:18px;
+    font-size:15px;
     font-weight:bold;
 }
 
 .ranking-player{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    color:#ffffff;
+    min-width:0;
+}
+
+.ranking-trophy{
+    width:24px;
+    height:24px;
+    object-fit:contain;
+    flex-shrink:0;
+}
+
+.rank-gold{
+    color:#ffd700;
+    text-shadow:0 0 6px rgba(255,215,0,.75);
+}
+
+.rank-silver{
+    color:#d8d8d8;
+    text-shadow:0 0 6px rgba(220,220,220,.65);
+}
+
+.rank-bronze{
+    color:#9b5a2e;
+    text-shadow:0 0 6px rgba(155,90,46,.65);
+}
+
+.rank-normal{
     color:#ffffff;
 }
 
 .ranking-score{
     color:#ffd700;
+    font-weight:bold;
+    cursor:help;
+    white-space:nowrap;
 }
 
 .admin-bonus-btn{
-    margin-left:8px;
+    margin-left:6px;
 
     width:22px;
     height:22px;
@@ -174,7 +207,7 @@ body{
 
     cursor:pointer;
 
-    font-size:14px;
+    font-size:13px;
     font-weight:bold;
 
     transition:all .2s ease;
@@ -197,13 +230,6 @@ body{
     background:#111;
     color:#ffd700;
     box-sizing:border-box;
-}
-
-.ranking-score{
-    color:#ffd700;
-    font-weight:bold;
-    cursor:help;
-    white-space:nowrap;
 }
 
 
@@ -911,28 +937,45 @@ function updateRanking(tiles){
         return;
     }
 
-    rankingContent.innerHTML = rankingArray.map((player, index) => `
-        <div class="ranking-row">
-            <span class="ranking-player">
-                ${index + 1}. ${player.nickname}
-            </span>
+    rankingContent.innerHTML = rankingArray.map((player, index) => {
+        let trophy = "";
+        let playerClass = "rank-normal";
 
-            <strong
-                class="ranking-score"
-                title="Punkty za kafelki: ${player.points}&#10;Punkty bonusowe: ${player.bonusPoints}&#10;Suma: ${player.totalPoints}"
-            >
-                ${player.totalPoints} pkt
+        if(index === 0){
+            trophy = `<img src="img/Trofeum 1.png" class="ranking-trophy">`;
+            playerClass = "rank-gold";
+        }else if(index === 1){
+            trophy = `<img src="img/Trofeum 2.png" class="ranking-trophy">`;
+            playerClass = "rank-silver";
+        }else if(index === 2){
+            trophy = `<img src="img/Trofeum 3.png" class="ranking-trophy">`;
+            playerClass = "rank-bronze";
+        }
 
-                ${isAdmin() ? `
-                    <button
-                        class="admin-bonus-btn"
-                        onclick="event.stopPropagation(); openUserPointsModal('${player.nickname}', ${player.bonusPoints || 0}, ${player.points || 0})">
-                        ⭐
-                    </button>
-                ` : ""}
-            </strong>
-        </div>
-    `).join("");
+        return `
+            <div class="ranking-row">
+                <span class="ranking-player ${playerClass}">
+                    ${trophy}
+                    ${index + 1}. ${player.nickname}
+                </span>
+
+                <strong
+                    class="ranking-score"
+                    title="Punkty za kafelki: ${player.points}&#10;Punkty bonusowe: ${player.bonusPoints}&#10;Suma: ${player.totalPoints}"
+                >
+                    ${player.totalPoints} pkt
+
+                    ${isAdmin() ? `
+                        <button
+                            class="admin-bonus-btn"
+                            onclick="event.stopPropagation(); openUserPointsModal('${player.nickname}', ${player.bonusPoints || 0}, ${player.points || 0})">
+                            ⭐
+                        </button>
+                    ` : ""}
+                </strong>
+            </div>
+        `;
+    }).join("");
 }
 
 function openUserPointsModal(nickname, currentBonus, tilePoints){
