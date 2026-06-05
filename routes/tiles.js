@@ -171,41 +171,25 @@ router.post("/users/bonus-points", (req, res) => {
         });
     }
 
-    db.get(
+    db.run(
         `
-        SELECT bonus_points
-        FROM users
+        UPDATE users
+        SET bonus_points = ?
         WHERE nickname = ?
         `,
-        [nickname],
-        (err, user) => {
-            if(err || !user){
+        [points, nickname],
+        function(err){
+            if(err){
+                console.error("BONUS UPDATE ERROR:", err);
+
                 return res.status(500).json({
-                    message:"Nie znaleziono użytkownika."
+                    message:"Błąd zapisu bonusowych punktów."
                 });
             }
 
-            const newBonus = Number(user.bonus_points || 0) + points;
-
-            db.run(
-                `
-                UPDATE users
-                SET bonus_points = ?
-                WHERE nickname = ?
-                `,
-                [newBonus, nickname],
-                function(err){
-                    if(err){
-                        return res.status(500).json({
-                            message:"Błąd zapisu bonusu."
-                        });
-                    }
-
-                    return res.json({
-                        message:`Nowy bonus: ${newBonus} pkt`
-                    });
-                }
-            );
+            return res.json({
+                message:"Bonusowe punkty użytkownika zostały zapisane."
+            });
         }
     );
 });
