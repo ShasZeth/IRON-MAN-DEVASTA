@@ -140,9 +140,51 @@ body{
 .ranking-row{
     display:flex;
     justify-content:space-between;
-    border-bottom:1px solid rgba(255,215,0,.25);
-    padding:8px 0;
+    align-items:center;
+
+    padding:6px 4px;
+    margin-bottom:6px;
+
+    border-bottom:1px solid rgba(255,215,0,0.25);
+
+    color:#fff;
+    font-size:18px;
+    font-weight:bold;
 }
+
+.ranking-player{
+    color:#ffffff;
+}
+
+.ranking-score{
+    color:#ffd700;
+}
+
+.admin-bonus-btn{
+    margin-left:8px;
+
+    width:22px;
+    height:22px;
+
+    border:none;
+    border-radius:4px;
+
+    background:#c89b3c;
+    color:#111;
+
+    cursor:pointer;
+
+    font-size:14px;
+    font-weight:bold;
+
+    transition:all .2s ease;
+}
+
+.admin-bonus-btn:hover{
+    transform:scale(1.15);
+    background:#ffd700;
+}
+
 
 /* GŁÓWNA ZAWARTOŚĆ */
 
@@ -870,20 +912,29 @@ function updateRanking(tiles){
         return;
     }
 
-    rankingContent.innerHTML = rankingArray.map((player, index) => `
+    rankingContent.innerHTML = rankingArray.map((player,index)=>`
+
         <div class="ranking-row">
-            <span>${index + 1}. ${player.nickname}</span>
-            <strong>
-                ${player.totalPoints} pkt
-                ${isAdmin() ? `
-                <button
-                    onclick="adminSetUserBonusPoints('${player.nickname}', ${player.bonusPoints || 0})">
-                        ⭐
-                    </button>
-                ` : ""}
-            </strong>
-        </div>
-    `).join("");
+
+            <div class="ranking-player">
+            ${index + 1}. ${player.nickname}
+            </div>
+
+            <div class="ranking-score">
+            ${player.totalPoints} pkt
+
+        ${isAdmin() ? `
+            <button
+                class="admin-bonus-btn"
+                onclick="adminSetUserBonusPoints('${player.nickname}', ${player.bonusPoints || 0})">
+                +
+            </button>
+        ` : ""}
+    </div>
+
+</div>
+
+`).join("");
 }
 async function adminSetUserBonusPoints(nickname, currentBonusPoints){
     const newPoints = prompt(
