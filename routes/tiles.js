@@ -154,14 +154,9 @@ router.post("/points/:id", auth, (req, res) => {
     );
 });
 
-router.post("/users/:userId/bonus-points", verifyToken, async (req, res) => {
+router.post("/users/:userId/bonus-points", async (req, res) => {
     try {
-        if(!req.user.isAdmin){
-            return res.status(403).json({
-                message: "Brak uprawnień administratora."
-            });
-        }
-
+        
         const { userId } = req.params;
         const { bonusPoints } = req.body;
 
