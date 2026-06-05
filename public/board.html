@@ -876,7 +876,7 @@ function updateRanking(tiles){
             <strong>
                 ${player.totalPoints} pkt
                 ${isAdmin() ? `
-                    <button onclick="adminSetUserBonusPoints(${player.userId}, '${player.nickname}', ${player.bonusPoints})">
+                    <button onclick="adminSetUserBonusPoints('${player.nickname}', ${player.bonusPoints || 0})">
                         ➕
                     </button>
                 ` : ""}
@@ -885,7 +885,6 @@ function updateRanking(tiles){
     `).join("");
 }
 async function adminSetUserBonusPoints(nickname, currentBonusPoints){
-
     const newPoints = prompt(
         `Podaj bonusowe punkty dla użytkownika ${nickname}:`,
         currentBonusPoints || 0
@@ -908,6 +907,7 @@ async function adminSetUserBonusPoints(nickname, currentBonusPoints){
             "Content-Type":"application/json"
         },
         body:JSON.stringify({
+            nickname:nickname,
             bonusPoints:parsedPoints
         })
     });
