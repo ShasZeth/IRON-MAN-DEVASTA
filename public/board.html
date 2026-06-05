@@ -875,7 +875,7 @@ function updateRanking(tiles){
             <span>${index + 1}. ${player.nickname}</span>
             <strong>
                 ${player.totalPoints} pkt
-                ${isAdmin() && player.userId ? `
+                ${isAdmin() ? `
                     <button onclick="adminSetUserBonusPoints(${player.userId}, '${player.nickname}', ${player.bonusPoints})">
                         ➕
                     </button>
@@ -884,8 +884,8 @@ function updateRanking(tiles){
         </div>
     `).join("");
 }
+async function adminSetUserBonusPoints(nickname, currentBonusPoints){
 
-async function adminSetUserBonusPoints(userId, nickname, currentBonusPoints){
     const newPoints = prompt(
         `Podaj bonusowe punkty dla użytkownika ${nickname}:`,
         currentBonusPoints || 0
@@ -902,7 +902,7 @@ async function adminSetUserBonusPoints(userId, nickname, currentBonusPoints){
         return;
     }
 
-    const response = await fetch(`/api/tiles/users/${userId}/bonus-points`, {
+    const response = await fetch(`/api/tiles/users/bonus-points`, {
         method:"POST",
         headers:{
             "Content-Type":"application/json"

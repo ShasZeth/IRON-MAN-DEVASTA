@@ -154,13 +154,17 @@ router.post("/points/:id", auth, (req, res) => {
     );
 });
 
-router.post("/users/:userId/bonus-points", async (req, res) => {
+router.post("/users/bonus-points", async (req, res) => {
     try {
-        
-        const { userId } = req.params;
-        const { bonusPoints } = req.body;
+        const { nickname, bonusPoints } = req.body;
 
         const points = Number(bonusPoints);
+
+        if(!nickname){
+            return res.status(400).json({
+                message: "Brak nazwy użytkownika."
+            });
+        }
 
         if(!Number.isInteger(points)){
             return res.status(400).json({
@@ -169,8 +173,8 @@ router.post("/users/:userId/bonus-points", async (req, res) => {
         }
 
         await pool.query(
-            "UPDATE users SET bonus_points = $1 WHERE id = $2",
-            [points, userId]
+            "UPDATE users SET bonus_points = $1 WHERE nickname = $2",
+            [points, nickname]
         );
 
         res.json({
