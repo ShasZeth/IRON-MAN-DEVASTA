@@ -110,6 +110,50 @@ router.post("/rename-tile/:id", auth, (req, res) => {
     );
 });
 
+router.post("/points/:id", auth, (req, res) => {
+
+    if (!req.user.isAdmin) {
+        return res.status(403).json({
+            success:false,
+            message:"Brak uprawnień administratora"
+        });
+    }
+
+    const tileId = req.params.id;
+    const { points } = req.body;
+
+    const cleanPoints = Number(points);
+
+    if (!Number.isInteger(cleanPoints) || cleanPoints < 0) {
+        return res.status(400).json({
+            success:false,
+            message:"Punkty muszą być liczbą całkowitą większą lub równą 0"
+        });
+    }
+
+    db.run(
+        `
+        UPDATE tiles
+        SET points = ?
+        WHERE id = ?
+        `,
+        [cleanPoints, tileId],
+        function(err){
+            if(err){
+                return res.status(500).json({
+                    success:false,
+                    message:"Nie udało się zmienić punktów"
+                });
+            }
+
+            res.json({
+                success:true,
+                message:"Punkty kafelka zostały zmienione"
+            });
+        }
+    );
+});
+
 router.get("/", (req, res) => {
     db.all(
         `
@@ -120,6 +164,7 @@ router.get("/", (req, res) => {
                 tiles.takenat,
                 tiles.screenshot_url,
                 tiles.tile_name,
+                tiles.points,
                 users.nickname
         FROM tiles
         LEFT JOIN users ON users.id = tiles.takenby

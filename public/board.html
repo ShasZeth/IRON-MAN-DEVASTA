@@ -257,6 +257,7 @@ body{
 }
 
 .tile{
+    position:relative;
     min-height:85px;
     border:2px solid #b8860b;
     cursor:pointer;
@@ -272,6 +273,29 @@ body{
     box-shadow:0 0 12px rgba(0,0,0,.8);
     text-shadow:1px 1px 2px black;
 }
+.tile-edit-btn{
+    position:absolute;
+    top:4px;
+    right:4px;
+    width:22px;
+    height:22px;
+    border:none;
+    border-radius:50%;
+    background:rgba(0,0,0,.65);
+    color:#ffd700;
+    font-size:12px;
+    cursor:pointer;
+    z-index:5;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.tile-edit-btn:hover{
+    background:rgba(255,215,0,.25);
+    box-shadow:0 0 8px rgba(255,215,0,.8);
+}
+
 
 .tile small{
     display:block;
@@ -318,6 +342,15 @@ body{
     text-align:center;
     font-size:13px;
     line-height:1.1;
+}
+
+.tile-points-free{
+    display:block;
+    width:100%;
+    text-align:center;
+    font-size:13px;
+    line-height:1.1;
+    color:#ffdd66;
 }
 
 .tile:hover{
@@ -576,6 +609,13 @@ function openTileModal(tile){
         </button>
 
         <button
+            class="modal-btn"
+            onclick="adminSetTilePoints(${tile.id}, ${tile.points || 0})"
+        >
+            ⭐ Ustaw punkty
+        </button>
+
+        <button
             class="modal-btn modal-unlock"
             onclick="adminUnlockTile(${tile.id})"
         >
@@ -661,6 +701,49 @@ async function adminRenameTile(tileId, currentName){
     if(
         document.getElementById("adminPanel").style.display === "block"
     ){
+        await loadAdminTiles();
+    }
+}
+
+async function adminSetTilePoints(tileId, currentPoints){
+
+    const newPoints = prompt(
+        `Podaj liczbę punktów dla kafelka #${tileId}:`,
+        currentPoints || 0
+    );
+
+    if(newPoints === null){
+        return;
+    }
+
+    const parsedPoints = Number(newPoints);
+
+    if(!Number.isInteger(parsedPoints) || parsedPoints < 0){
+        alert("Punkty muszą być liczbą całkowitą większą lub równą 0.");
+        return;
+    }
+
+    const token = localStorage.getItem("token");
+
+    const response = await fetch(`/api/tiles/points/${tileId}`, {
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json",
+            Authorization:`Bearer ${token}`
+        },
+        body:JSON.stringify({
+            points:parsedPoints
+        })
+    });
+
+    const data = await response.json();
+
+    alert(data.message);
+
+    closeTileModal();
+    await loadTiles();
+
+    if(document.getElementById("adminPanel").style.display === "block"){
         await loadAdminTiles();
     }
 }
@@ -789,11 +872,21 @@ async function loadTiles(){
     }
 `;
         }else{
-            div.innerHTML = `
-                <div>#${tile.id}</div>
-                <small>Wolny</small>
-            `;
-        }
+    div.innerHTML = `
+        <div class="tile-title">
+            ${tile.tile_name
+                ? `#${tile.id} ${tile.tile_name}`
+                : `#${tile.id}`
+            }
+        </div>
+
+        <small>Wolny</small>
+
+        <small class="tile-points-free">
+            ${tile.points || 0} pkt
+        </small>
+    `;
+}
 
         div.onclick = async () => {
             const token = localStorage.getItem("token");
