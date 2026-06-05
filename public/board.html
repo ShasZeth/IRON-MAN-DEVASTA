@@ -185,6 +185,27 @@ body{
     background:#ffd700;
 }
 
+.bonus-input{
+    width:100%;
+    padding:10px;
+    margin:8px 0 15px 0;
+    text-align:center;
+    font-size:18px;
+    font-weight:bold;
+    border:1px solid #c89b3c;
+    border-radius:6px;
+    background:#111;
+    color:#ffd700;
+    box-sizing:border-box;
+}
+
+.ranking-score{
+    color:#ffd700;
+    font-weight:bold;
+    cursor:help;
+    white-space:nowrap;
+}
+
 
 /* GŁÓWNA ZAWARTOŚĆ */
 
@@ -854,29 +875,6 @@ function updateStats(tiles){
     document.getElementById("progressText").innerText = `Zapełnienie: ${percent}%`;
 }
 
-async function loadPointsRanking(){
-    const response = await fetch("/api/tiles/ranking/points");
-    const ranking = await response.json();
-
-    const rankingContent =
-        document.getElementById("rankingContent");
-
-    if(!Array.isArray(ranking) || ranking.length === 0){
-        rankingContent.innerHTML = `
-            <p>Brak punktów</p>
-            <small>Ranking uzupełni się po zdobyciu punktów.</small>
-        `;
-        return;
-    }
-
-    rankingContent.innerHTML = ranking.map((player, index) => `
-        <div class="ranking-row">
-            <span>${index + 1}. ${player.nickname}</span>
-            <strong>${player.total_points} pkt</strong>
-        </div>
-    `).join("");
-}
-
 function updateRanking(tiles){
     const ranking = {};
 
@@ -886,7 +884,6 @@ function updateRanking(tiles){
                 ranking[tile.nickname] = {
                     nickname: tile.nickname,
                     points: 0,
-                    userId: tile.user_id || tile.userid || null,
                     bonusPoints: Number(tile.bonus_points || 0)
                 };
             }
@@ -898,7 +895,9 @@ function updateRanking(tiles){
     const rankingArray = Object.values(ranking)
         .map(player => ({
             ...player,
-            totalPoints: player.points + player.bonusPoints
+            totalPoints:
+                Number(player.points || 0) +
+                Number(player.bonusPoints || 0)
         }))
         .sort((a, b) => b.totalPoints - a.totalPoints);
 
@@ -912,55 +911,87 @@ function updateRanking(tiles){
         return;
     }
 
-    rankingContent.innerHTML = rankingArray.map((player,index)=>`
-
+    rankingContent.innerHTML = rankingArray.map((player, index) => `
         <div class="ranking-row">
+            <span class="ranking-player">
+                ${index + 1}. ${player.nickname}
+            </span>
 
-            <div class="ranking-player">
-            ${index + 1}. ${player.nickname}
-            </div>
+            <strong
+                class="ranking-score"
+                title="Punkty za kafelki: ${player.points}&#10;Punkty bonusowe: ${player.bonusPoints}&#10;Suma: ${player.totalPoints}"
+            >
+                ${player.totalPoints} pkt
 
-            <div class="ranking-score">
-            ${player.totalPoints} pkt
-
-        ${isAdmin() ? `
-            <button
-                class="admin-bonus-btn"
-                onclick="adminSetUserBonusPoints('${player.nickname}', ${player.bonusPoints || 0})">
-                +
-            </button>
-        ` : ""}
-    </div>
-
-</div>
-
-`).join("");
+                ${isAdmin() ? `
+                    <button
+                        class="admin-bonus-btn"
+                        onclick="event.stopPropagation(); openUserPointsModal('${player.nickname}', ${player.bonusPoints || 0}, ${player.points || 0})">
+                        ⭐
+                    </button>
+                ` : ""}
+            </strong>
+        </div>
+    `).join("");
 }
-async function adminSetUserBonusPoints(nickname, currentBonusPoints){
-    const newPoints = prompt(
-        `Dodaj bonusowe punkty dla użytkownika ${nickname}:`,
-        currentBonusPoints || 0
-    );
 
-    if(newPoints === null){
+function openUserPointsModal(nickname, currentBonus, tilePoints){
+    const total =
+        Number(tilePoints || 0) +
+        Number(currentBonus || 0);
+
+    const html = `
+        <h2>👤 ${nickname}</h2>
+
+        <p>
+            <b>Punkty za kafelki:</b>
+            ${tilePoints} pkt
+        </p>
+
+        <p>
+            <b>Punkty bonusowe:</b>
+        </p>
+
+        <input
+            id="bonusInput"
+            class="bonus-input"
+            type="number"
+            value="${currentBonus}"
+        >
+
+        <p>
+            <b>Suma:</b>
+            ${total} pkt
+        </p>
+
+        <button
+            class="modal-btn"
+            onclick="saveUserBonus('${nickname}')">
+            💾 Zapisz zmiany
+        </button>
+    `;
+
+    document.getElementById("tileDetails").innerHTML = html;
+    document.getElementById("tileModal").style.display = "block";
+}
+
+async function saveUserBonus(nickname){
+    const bonusInput = document.getElementById("bonusInput");
+    const bonusPoints = Number(bonusInput.value);
+
+    if(!Number.isInteger(bonusPoints)){
+        alert("Punkty bonusowe muszą być liczbą całkowitą.");
         return;
     }
 
-    const parsedPoints = Number(newPoints);
-
-    if(!Number.isInteger(parsedPoints)){
-        alert("Punkty muszą być liczbą całkowitą.");
-        return;
-    }
-
-    const response = await fetch(`/api/tiles/users/bonus-points`, {
+    const response = await fetch("/api/tiles/users/bonus-points", {
         method:"POST",
         headers:{
             "Content-Type":"application/json"
         },
         body:JSON.stringify({
             nickname:nickname,
-            bonusPoints:parsedPoints
+            bonusPoints:bonusPoints
         })
     });
 
@@ -968,8 +999,11 @@ async function adminSetUserBonusPoints(nickname, currentBonusPoints){
 
     alert(data.message);
 
+    closeTileModal();
+
     await loadTiles();
 }
+
 
 async function loadTiles(){
     const response = await fetch("/api/tiles");
