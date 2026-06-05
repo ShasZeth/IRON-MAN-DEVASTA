@@ -154,54 +154,60 @@ router.post("/points/:id", auth, (req, res) => {
     );
 });
 
-router.post("/users/bonus-points", async (req, res) => {
-    try {
-        const { nickname, bonusPoints } = req.body;
+router.post("/users/bonus-points", (req, res) => {
+    const { nickname, bonusPoints } = req.body;
 
-        const points = Number(bonusPoints);
+    const points = Number(bonusPoints);
 
-        if(!nickname){
-            return res.status(400).json({
-                message: "Brak nazwy użytkownika."
-            });
-        }
-
-        if(!Number.isInteger(points)){
-            return res.status(400).json({
-                message: "Punkty muszą być liczbą całkowitą."
-            });
-        }
-
-        db.run(
-    `
-    UPDATE users
-    SET bonus_points = ?
-    WHERE nickname = ?
-    `,
-    [points, nickname],
-    function(err){
-        if(err){
-            console.error(err);
-
-            return res.status(500).json({
-                message:"Błąd zapisu bonusowych punktów."
-            });
-        }
-
-        return res.json({
-            message:"Bonusowe punkty użytkownika zostały zapisane."
+    if(!nickname){
+        return res.status(400).json({
+            message:"Brak nazwy użytkownika."
         });
     }
-);
 
-return;
-
-    } catch(error){
-        console.error("BONUS POINTS ERROR:", error);
-        res.status(500).json({
-            message: "Błąd zapisu bonusowych punktów."
+    if(!Number.isInteger(points)){
+        return res.status(400).json({
+            message:"Punkty muszą być liczbą całkowitą."
         });
     }
+
+    db.get(
+        `
+        SELECT bonus_points
+        FROM users
+        WHERE nickname = ?
+        `,
+        [nickname],
+        (err, user) => {
+            if(err || !user){
+                return res.status(500).json({
+                    message:"Nie znaleziono użytkownika."
+                });
+            }
+
+            const newBonus = Number(user.bonus_points || 0) + points;
+
+            db.run(
+                `
+                UPDATE users
+                SET bonus_points = ?
+                WHERE nickname = ?
+                `,
+                [newBonus, nickname],
+                function(err){
+                    if(err){
+                        return res.status(500).json({
+                            message:"Błąd zapisu bonusu."
+                        });
+                    }
+
+                    return res.json({
+                        message:`Nowy bonus: ${newBonus} pkt`
+                    });
+                }
+            );
+        }
+    );
 });
 
 router.get("/ranking/points", async (req, res) => {
