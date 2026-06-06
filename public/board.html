@@ -283,6 +283,32 @@ body{
     color:white;
 }
 
+.tile-form-input{
+    width:100%;
+    padding:11px;
+    margin:6px 0 12px 0;
+    font-size:16px;
+    font-weight:bold;
+    border:1px solid #c89b3c;
+    border-radius:6px;
+    background:#111;
+    color:#ffd700;
+    box-sizing:border-box;
+}
+
+.tile-form-label{
+    display:block;
+    margin-top:10px;
+    margin-bottom:4px;
+    font-weight:bold;
+    color:#ffffff;
+}
+
+.modal-save{
+    background:#ff9800;
+    color:white;
+}
+
 #board{
     width:1150px;
     max-width:1150px;
@@ -585,6 +611,60 @@ function closeRules(){
 }
 
 function openTileModal(tile){
+    if(tile.isNew){
+        const html = `
+            <h2>Nowy kafelek</h2>
+
+            <p><b>Status:</b> Tworzenie nowego kafelka</p>
+
+            <label class="tile-form-label" for="newTileNameInput">
+                Nazwa kafelka:
+            </label>
+
+            <input
+                id="newTileNameInput"
+                class="tile-form-input"
+                type="text"
+                placeholder="Np. Smok, Boss, Misja..."
+                value=""
+            >
+
+            <label class="tile-form-label" for="newTilePointsInput">
+                Punkty za zdobycie:
+            </label>
+
+            <input
+                id="newTilePointsInput"
+                class="tile-form-input"
+                type="number"
+                min="0"
+                step="1"
+                value="0"
+            >
+
+            <hr>
+
+            <button
+                class="modal-btn modal-save"
+                onclick="saveNewTile()"
+            >
+                💾 Zapisz kafelek
+            </button>
+        `;
+
+        document.getElementById("tileDetails").innerHTML = html;
+        document.getElementById("tileModal").style.display = "block";
+
+        setTimeout(() => {
+            const input = document.getElementById("newTileNameInput");
+            if(input){
+                input.focus();
+            }
+        }, 50);
+
+        return;
+    }
+
     const date = tile.takenat
         ? new Date(tile.takenat).toLocaleString("pl-PL")
         : "-";
@@ -640,7 +720,6 @@ function openTileModal(tile){
     document.getElementById("tileDetails").innerHTML = html;
     document.getElementById("tileModal").style.display = "block";
 }
-
 
 
 async function adminUnlockTile(tileId){
@@ -744,28 +823,32 @@ async function adminSetTilePoints(tileId, currentPoints){
     await loadTiles();
 }
 
-async function adminCreateTile(){
+function adminCreateTile(){
     if(!isAdmin()){
         alert("Brak uprawnień administratora.");
         return;
     }
 
-    const tileName = prompt("Podaj nazwę nowego kafelka:");
+    openTileModal({
+        id:null,
+        tile_name:"",
+        points:0,
+        taken:0,
+        isNew:true
+    });
+}
 
-    if(tileName === null){
+async function saveNewTile(){
+    if(!isAdmin()){
+        alert("Brak uprawnień administratora.");
         return;
     }
 
-    const pointsValue = prompt(
-        "Podaj liczbę punktów dla nowego kafelka:",
-        0
-    );
+    const nameInput = document.getElementById("newTileNameInput");
+    const pointsInput = document.getElementById("newTilePointsInput");
 
-    if(pointsValue === null){
-        return;
-    }
-
-    const parsedPoints = Number(pointsValue);
+    const tileName = nameInput ? nameInput.value.trim() : "";
+    const parsedPoints = Number(pointsInput ? pointsInput.value : 0);
 
     if(!Number.isInteger(parsedPoints) || parsedPoints < 0){
         alert("Punkty muszą być liczbą całkowitą większą lub równą 0.");
@@ -781,7 +864,7 @@ async function adminCreateTile(){
             Authorization:`Bearer ${token}`
         },
         body:JSON.stringify({
-            tileName:tileName.trim(),
+            tileName:tileName,
             points:parsedPoints
         })
     });
@@ -790,6 +873,7 @@ async function adminCreateTile(){
 
     alert(data.message);
 
+    closeTileModal();
     await loadTiles();
 }
 
