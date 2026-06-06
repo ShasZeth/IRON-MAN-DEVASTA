@@ -106,12 +106,15 @@ body{
 }
 
 #specialTilesList{
-    overflow-y:auto;
-    max-height:250px;
-    padding-right:6px;
+    height: calc(100% - 32px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 6px;
+    padding-bottom: 14px;
+    box-sizing: border-box;
 
-    scrollbar-width:thin;
-    scrollbar-color:#ffcc00 #111;
+    scrollbar-width: thin;
+    scrollbar-color: #ffcc00 #111;
 }
 
 #specialTilesList::-webkit-scrollbar{
@@ -206,24 +209,6 @@ body{
 .special-tile-edit:hover{
     background:rgba(255,215,0,.25);
     box-shadow:0 0 8px rgba(255,215,0,.8);
-}
-
-#specialTilesList::-webkit-scrollbar{
-    width:8px;
-}
-
-#specialTilesList::-webkit-scrollbar-track{
-    background:rgba(0,0,0,.55);
-    border-radius:10px;
-}
-
-#specialTilesList::-webkit-scrollbar-thumb{
-    background:#b8860b;
-    border-radius:10px;
-}
-
-#specialTilesList::-webkit-scrollbar-thumb:hover{
-    background:#ffd700;
 }
 
 .tile-type-box{
