@@ -262,14 +262,11 @@ router.post("/create", auth, (req, res) => {
 
     db.get(
         `
-        SELECT 
-            COALESCE(MAX(id), 0) + 1 AS next_id,
-            COALESCE(MAX(special_number), 0) + 1 AS next_special_number
+        SELECT COALESCE(MAX(id), 0) + 1 AS next_id
         FROM tiles
-        WHERE COALESCE(is_special, 0) = ?
         `,
-        [specialFlag],
-        (err, row) => {
+        [],
+        (err, idRow) => {
             if(err){
                 console.error("CREATE TILE MAX ID ERROR:", err);
                 return res.status(500).json({
@@ -277,34 +274,53 @@ router.post("/create", auth, (req, res) => {
                 });
             }
 
-            const nextId = row.next_id;
-            const nextSpecialNumber = specialFlag ? row.next_special_number : null;
-
-            db.run(
+            db.get(
                 `
-                INSERT INTO tiles (id, taken, tile_name, points, is_special, special_number)
-                VALUES (?, 0, ?, ?, ?, ?)
+                SELECT COALESCE(MAX(special_number), 0) + 1 AS next_special_number
+                FROM tiles
+                WHERE COALESCE(is_special, 0) = 1
                 `,
-                [
-                    nextId,
-                    tileName ? tileName.trim() : "",
-                    parsedPoints,
-                    specialFlag,
-                    nextSpecialNumber
-                ],
-                function(err){
+                [],
+                (err, specialRow) => {
                     if(err){
-                        console.error("CREATE TILE ERROR:", err);
+                        console.error("CREATE TILE MAX SPECIAL NUMBER ERROR:", err);
                         return res.status(500).json({
                             message:"Błąd tworzenia kafelka."
                         });
                     }
 
-                    res.json({
-                        message: specialFlag
-                            ? `Utworzono kafelek bonusowy #${nextSpecialNumber}.`
-                            : `Utworzono kafelek #${nextId}.`
-                    });
+                    const nextId = idRow.next_id;
+                    const nextSpecialNumber = specialFlag
+                        ? specialRow.next_special_number
+                        : null;
+
+                    db.run(
+                        `
+                        INSERT INTO tiles (id, taken, tile_name, points, is_special, special_number)
+                        VALUES (?, 0, ?, ?, ?, ?)
+                        `,
+                        [
+                            nextId,
+                            tileName ? tileName.trim() : "",
+                            parsedPoints,
+                            specialFlag,
+                            nextSpecialNumber
+                        ],
+                        function(err){
+                            if(err){
+                                console.error("CREATE TILE ERROR:", err);
+                                return res.status(500).json({
+                                    message:"Błąd tworzenia kafelka."
+                                });
+                            }
+
+                            res.json({
+                                message: specialFlag
+                                    ? `Utworzono kafelek bonusowy #${nextSpecialNumber}.`
+                                    : `Utworzono kafelek #${nextId}.`
+                            });
+                        }
+                    );
                 }
             );
         }
