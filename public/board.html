@@ -78,46 +78,6 @@ body{
     transform:translateY(-1px) scale(.98);
 }
 
-/* IKONA PANELU ADMINA */
-
-#adminGear{
-    position:absolute;
-    top:24px;
-    right:24px;
-
-    width:50px;
-    height:50px;
-    min-width:50px;
-    max-width:50px;
-    min-height:50px;
-    max-height:50px;
-
-    border:2px solid #b8860b;
-    border-radius:50%;
-
-    background:
-        radial-gradient(
-            circle,
-            rgba(40,40,40,.95),
-            rgba(10,10,10,.95)
-        );
-
-    color:#ffd700;
-    font-size:24px;
-    font-weight:bold;
-    cursor:pointer;
-    z-index:2000;
-
-    box-shadow:0 0 12px rgba(255,215,0,.35);
-
-    display:none;
-}
-
-#adminGear:hover{
-    transform:rotate(30deg);
-    box-shadow:0 0 18px rgba(255,215,0,.8);
-}
-
 /* RANKING */
 
 #rankingContent{
@@ -292,46 +252,9 @@ body{
     font-size:14px;
 }
 
-#adminPanel{
-    display:none;
-    max-width:800px;
-    margin:20px auto;
-    border:2px solid #b8860b;
-    padding:15px;
-    background:rgba(20,20,20,.9);
-    border-radius:12px;
-    box-shadow:0 0 15px rgba(0,0,0,.8);
-    position:relative;
-    z-index:1200;
-}
-
-.refresh-btn{
-    background:#2196f3;
-    color:white;
-}
-
-.unlock-btn,
 .modal-unlock{
     background:#ff9800;
     color:white;
-}
-
-.admin-header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-}
-
-.admin-row{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    border-bottom:1px solid #555;
-    padding:10px 0;
-}
-
-.admin-row:last-child{
-    border-bottom:none;
 }
 
 #board{
@@ -516,12 +439,6 @@ body{
         display:none;
     }
 
-    #adminGear{
-        position:fixed;
-        top:20px;
-        right:20px;
-    }
-
     .page-content{
         position:relative;
         top:auto;
@@ -546,13 +463,6 @@ body{
 
 <div id="gameUI">
 
-    <button
-        id="adminGear"
-        onclick="toggleAdminPanel()"
-        title="Panel administratora">
-        ⚙
-    </button>
-
     <button id="logoutBtn" onclick="logout()" title="Wyloguj"></button>
     <button id="rulesBtn" onclick="showRules()" title="Regulamin"></button>
 
@@ -574,15 +484,6 @@ body{
             </div>
 
             <p id="progressText">Zapełnienie: 0%</p>
-        </div>
-
-        <div id="adminPanel">
-            <div class="admin-header">
-                <h2>Panel administratora</h2>
-                <button class="refresh-btn" onclick="loadAdminTiles()">Odśwież</button>
-            </div>
-
-            <div id="adminTiles"></div>
         </div>
 
         <div id="board"></div>
@@ -637,16 +538,6 @@ function getTokenData(){
 function isAdmin(){
     const data = getTokenData();
     return data && data.isAdmin;
-}
-
-function showAdminButton(){
-
-    if(isAdmin()){
-
-        document.getElementById("adminGear").style.display = "block";
-
-    }
-
 }
 
 function closeTileModal(){
@@ -718,6 +609,8 @@ function openTileModal(tile){
     document.getElementById("tileModal").style.display = "block";
 }
 
+
+
 async function adminUnlockTile(tileId){
     const confirmUnlock = confirm(
         `Czy na pewno chcesz odblokować kafelek #${tileId}?`
@@ -742,10 +635,6 @@ async function adminUnlockTile(tileId){
 
     closeTileModal();
     await loadTiles();
-
-    if(document.getElementById("adminPanel").style.display === "block"){
-        await loadAdminTiles();
-    }
 }
 
 async function adminRenameTile(tileId, currentName){
@@ -755,7 +644,7 @@ async function adminRenameTile(tileId, currentName){
         currentName
     );
 
-     if(newName === null){
+    if(newName === null){
         return;
     }
 
@@ -782,12 +671,6 @@ async function adminRenameTile(tileId, currentName){
     closeTileModal();
 
     await loadTiles();
-
-    if(
-        document.getElementById("adminPanel").style.display === "block"
-    ){
-        await loadAdminTiles();
-    }
 }
 
 async function adminSetTilePoints(tileId, currentPoints){
@@ -827,64 +710,6 @@ async function adminSetTilePoints(tileId, currentPoints){
 
     closeTileModal();
     await loadTiles();
-
-    if(document.getElementById("adminPanel").style.display === "block"){
-        await loadAdminTiles();
-    }
-}
-
-async function toggleAdminPanel(){
-    if(!isAdmin()){
-        return;
-    }
-
-    const panel = document.getElementById("adminPanel");
-
-    if(panel.style.display === "none" || panel.style.display === ""){
-        panel.style.display = "block";
-        await loadAdminTiles();
-    }else{
-        panel.style.display = "none";
-    }
-}
-
-async function loadAdminTiles(){
-    const token = localStorage.getItem("token");
-
-    const response = await fetch("/api/tiles/taken/list", {
-        headers:{
-            Authorization:`Bearer ${token}`
-        }
-    });
-
-    const data = await response.json();
-
-    const container = document.getElementById("adminTiles");
-    container.innerHTML = "";
-
-    if(!Array.isArray(data)){
-        container.innerHTML = `<p>${data.message || "Brak dostępu"}</p>`;
-        return;
-    }
-
-    if(data.length === 0){
-        container.innerHTML = "<p>Brak zajętych kafelków.</p>";
-        return;
-    }
-
-    data.forEach(tile => {
-        const row = document.createElement("div");
-        row.className = "admin-row";
-
-        row.innerHTML = `
-            <span><strong>Kafelek #${tile.id}</strong> — ${tile.nickname}</span>
-            <button class="unlock-btn" onclick="adminUnlockTile(${tile.id})">
-                Odblokuj
-            </button>
-        `;
-
-        container.appendChild(row);
-    });
 }
 
 function updateStats(tiles){
@@ -1177,9 +1002,6 @@ async function loadTiles(){
 
             await loadTiles();
 
-            if(document.getElementById("adminPanel").style.display === "block"){
-                await loadAdminTiles();
-            }
         };
 
         board.appendChild(div);
@@ -1199,7 +1021,6 @@ window.onclick = function(event){
     }
 };
 
-showAdminButton();
 loadTiles();
 </script>
 
