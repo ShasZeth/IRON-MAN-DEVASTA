@@ -352,6 +352,38 @@ router.get("/", (req, res) => {
     );
 });
 
+router.delete("/:id", auth, (req, res) => {
+    if (!req.user.isAdmin) {
+        return res.status(403).json({
+            success:false,
+            message:"Brak uprawnień administratora"
+        });
+    }
+
+    const tileId = req.params.id;
+
+    db.run(
+        `
+        DELETE FROM tiles
+        WHERE id = ?
+        `,
+        [tileId],
+        function(err){
+            if(err){
+                return res.status(500).json({
+                    success:false,
+                    message:"Nie udało się usunąć kafelka"
+                });
+            }
+
+            res.json({
+                success:true,
+                message:"Kafelek został usunięty"
+            });
+        }
+    );
+});
+
 router.post("/:id", auth, (req, res) => {
     const tileId = req.params.id;
     const { screenshotUrl } = req.body;

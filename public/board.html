@@ -444,8 +444,15 @@ body{
     color:#ffffff;
 }
 
+/* Zapisywanie i usuwanie kafelka przez administratora */
+
 .modal-save{
     background:#ff9800;
+    color:white;
+}
+
+.modal-delete{
+    background:#8b0000;
     color:white;
 }
 
@@ -899,6 +906,13 @@ function openTileModal(tile){
         >
             Odblokuj kafelek
         </button>
+
+        <button
+            class="modal-btn modal-delete"
+            onclick="adminDeleteTile(${tile.id})"
+        >
+            🗑 Usuń kafelek
+        </button>
     `;
 }
 
@@ -1021,6 +1035,34 @@ function adminCreateTile(){
         taken:0,
         isNew:true
     });
+}
+
+async function adminDeleteTile(tileId){
+
+    const confirmDelete = confirm(
+        `Czy na pewno chcesz usunąć kafelek #${tileId}?`
+    );
+
+    if(!confirmDelete){
+        return;
+    }
+
+    const token = localStorage.getItem("token");
+
+    const response = await fetch(`/api/tiles/${tileId}`, {
+        method:"DELETE",
+        headers:{
+            Authorization:`Bearer ${token}`
+        }
+    });
+
+    const data = await response.json();
+
+    alert(data.message);
+
+    closeTileModal();
+
+    await loadTiles();
 }
 
 async function saveNewTile(){
