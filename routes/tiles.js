@@ -249,7 +249,7 @@ router.post("/create", auth, (req, res) => {
         });
     }
 
-    const { tileName, points } = req.body;
+    const { tileName, points, isSpecial } = req.body;
 
     const parsedPoints = Number(points || 0);
 
@@ -353,6 +353,7 @@ router.get("/", (req, res) => {
 });
 
 router.delete("/:id", auth, (req, res) => {
+
     if (!req.user.isAdmin) {
         return res.status(403).json({
             success:false,
@@ -369,6 +370,7 @@ router.delete("/:id", auth, (req, res) => {
         `,
         [tileId],
         function(err){
+
             if(err){
                 return res.status(500).json({
                     success:false,
