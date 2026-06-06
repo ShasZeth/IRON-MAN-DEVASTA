@@ -78,6 +78,153 @@ body{
     transform:translateY(-1px) scale(.98);
 }
 
+
+/* OKNO KAFELKÓW SPECJALNYCH POD MENU */
+
+#specialTilesBox{
+    position:absolute;
+    left:80px;
+    top:670px;
+    width:234px;
+    height:255px;
+
+    z-index:1200;
+
+    box-sizing:border-box;
+    padding:10px;
+
+    background:rgba(10,10,10,.72);
+    border:2px solid #b8860b;
+    border-radius:12px;
+
+    box-shadow:
+        0 0 12px rgba(0,0,0,.9),
+        inset 0 0 18px rgba(255,215,0,.08);
+
+    overflow:hidden;
+}
+
+#specialTilesBox h3{
+    margin:0 0 8px 0;
+    text-align:center;
+    color:#ffd700;
+    font-size:16px;
+    text-shadow:1px 1px 2px black;
+}
+
+#specialTilesList{
+    height:205px;
+    overflow-y:auto;
+    overflow-x:hidden;
+    padding-right:4px;
+}
+
+.special-empty{
+    margin-top:25px;
+    text-align:center;
+    color:#cfcfcf;
+    font-size:13px;
+    line-height:1.3;
+}
+
+.special-tile-row{
+    position:relative;
+    margin-bottom:8px;
+    padding:8px 26px 8px 8px;
+
+    border:1px solid #b8860b;
+    border-radius:8px;
+
+    background:linear-gradient(145deg, #3b1464, #7a1fa2);
+    color:#fff3c4;
+
+    font-weight:bold;
+    font-size:13px;
+    line-height:1.15;
+    text-shadow:1px 1px 2px black;
+
+    cursor:pointer;
+}
+
+.special-tile-row:hover{
+    box-shadow:0 0 10px rgba(255,215,0,.65);
+    transform:translateY(-1px);
+}
+
+.special-tile-name{
+    display:block;
+    color:#ffffff;
+}
+
+.special-tile-points{
+    display:block;
+    color:#ffd700;
+    font-size:12px;
+    margin-top:2px;
+}
+
+.special-tile-edit{
+    position:absolute;
+    top:6px;
+    right:5px;
+
+    width:20px;
+    height:20px;
+
+    border:none;
+    border-radius:50%;
+
+    background:rgba(0,0,0,.65);
+    color:#ffd700;
+
+    cursor:pointer;
+    font-size:11px;
+}
+
+.special-tile-edit:hover{
+    background:rgba(255,215,0,.25);
+    box-shadow:0 0 8px rgba(255,215,0,.8);
+}
+
+#specialTilesList::-webkit-scrollbar{
+    width:8px;
+}
+
+#specialTilesList::-webkit-scrollbar-track{
+    background:rgba(0,0,0,.55);
+    border-radius:10px;
+}
+
+#specialTilesList::-webkit-scrollbar-thumb{
+    background:#b8860b;
+    border-radius:10px;
+}
+
+#specialTilesList::-webkit-scrollbar-thumb:hover{
+    background:#ffd700;
+}
+
+.tile-type-box{
+    display:flex;
+    align-items:center;
+    gap:8px;
+
+    margin:8px 0 12px 0;
+    padding:10px;
+
+    border:1px solid #c89b3c;
+    border-radius:6px;
+
+    background:#111;
+    color:#ffd700;
+
+    font-weight:bold;
+}
+
+.tile-type-box input{
+    transform:scale(1.2);
+}
+
 /* RANKING */
 
 #rankingContent{
@@ -515,7 +662,8 @@ body{
 
     #logoutBtn,
     #rulesBtn,
-    #rankingContent{
+    #rankingContent,
+    #specialTilesBox{
         display:none;
     }
 
@@ -545,6 +693,13 @@ body{
 
     <button id="logoutBtn" onclick="logout()" title="Wyloguj"></button>
     <button id="rulesBtn" onclick="showRules()" title="Regulamin"></button>
+
+    <div id="specialTilesBox">
+        <h3>⭐ Kafelki specjalne</h3>
+        <div id="specialTilesList">
+            <p class="special-empty">Brak kafelków specjalnych.</p>
+        </div>
+    </div>
 
     <div id="rankingContent">
         <p>Brak punktów</p>
@@ -670,6 +825,14 @@ function openTileModal(tile){
                 value="0"
             >
 
+            <label class="tile-type-box">
+                <input
+                    id="newTileSpecialInput"
+                    type="checkbox"
+                >
+                ⭐ Kafelek specjalny — pokaż pod menu
+            </label>
+
             <hr>
 
             <button
@@ -703,6 +866,7 @@ function openTileModal(tile){
         <p><b>Właściciel:</b> ${tile.nickname || "-"}</p>
         <p><b>Data zajęcia:</b> ${date}</p>
         <p><b>Punkty za zdobycie:</b> ${tile.points || 0} pkt</p>
+        <p><b>Typ:</b> ${isSpecialTile(tile) ? "Specjalny" : "Zwykły"}</p>
     `;
 
     if(tile.screenshot_url){
@@ -874,9 +1038,11 @@ async function saveNewTile(){
 
     const nameInput = document.getElementById("newTileNameInput");
     const pointsInput = document.getElementById("newTilePointsInput");
+    const specialInput = document.getElementById("newTileSpecialInput");
 
     const tileName = nameInput ? nameInput.value.trim() : "";
     const parsedPoints = Number(pointsInput ? pointsInput.value : 0);
+    const isSpecial = specialInput ? specialInput.checked : false;
 
     if(!Number.isInteger(parsedPoints) || parsedPoints < 0){
         alert("Punkty muszą być liczbą całkowitą większą lub równą 0.");
@@ -893,7 +1059,8 @@ async function saveNewTile(){
         },
         body:JSON.stringify({
             tileName:tileName,
-            points:parsedPoints
+            points:parsedPoints,
+            isSpecial:isSpecial
         })
     });
 
@@ -903,6 +1070,70 @@ async function saveNewTile(){
 
     closeTileModal();
     await loadTiles();
+}
+
+
+function isSpecialTile(tile){
+    return tile.is_special === 1 ||
+        tile.is_special === true ||
+        tile.isSpecial === true ||
+        tile.special === 1 ||
+        tile.special === true;
+}
+
+function renderSpecialTiles(specialTiles){
+    const list = document.getElementById("specialTilesList");
+
+    if(!list){
+        return;
+    }
+
+    if(!specialTiles || specialTiles.length === 0){
+        list.innerHTML = `
+            <p class="special-empty">
+                Brak kafelków specjalnych.
+            </p>
+        `;
+        return;
+    }
+
+    list.innerHTML = "";
+
+    specialTiles.forEach(tile => {
+        const row = document.createElement("div");
+        row.className = "special-tile-row";
+
+        row.innerHTML = `
+            <span class="special-tile-name">
+                #${tile.id}${tile.tile_name ? ` ${tile.tile_name}` : ""}
+            </span>
+
+            <span class="special-tile-points">
+                ${tile.points || 0} pkt
+                ${tile.taken ? " • Zajęty" : " • Wolny"}
+            </span>
+        `;
+
+        row.onclick = () => {
+            openTileModal(tile);
+        };
+
+        if(isAdmin()){
+            const editBtn = document.createElement("button");
+            editBtn.className = "special-tile-edit";
+            editBtn.innerText = "✏️";
+            editBtn.title = "Edytuj kafelek specjalny";
+
+            editBtn.onclick = (event) => {
+                event.stopPropagation();
+                openTileModal(tile);
+            };
+
+            row.appendChild(editBtn);
+        }
+
+        list.appendChild(row);
+    });
 }
 
 function updateStats(tiles){
@@ -1144,13 +1375,17 @@ async function loadTiles(){
     const response = await fetch("/api/tiles");
     const tiles = await response.json();
 
-    updateStats(tiles);
+    const regularTiles = tiles.filter(tile => !isSpecialTile(tile));
+    const specialTiles = tiles.filter(tile => isSpecialTile(tile));
+
+    updateStats(regularTiles);
     updateRanking(tiles);
+    renderSpecialTiles(specialTiles);
 
     const board = document.getElementById("board");
     board.innerHTML = "";
 
-    tiles.forEach(tile => {
+    regularTiles.forEach(tile => {
     const div = document.createElement("div");
     div.className = "tile";
 
