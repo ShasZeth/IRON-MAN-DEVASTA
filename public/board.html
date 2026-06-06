@@ -1142,16 +1142,44 @@ function renderSpecialTiles(specialTiles){
         const row = document.createElement("div");
         row.className = "special-tile-row";
 
-        row.innerHTML = `
-            <span class="special-tile-name">
-                #${tile.special_number || tile.id}${tile.tile_name ? ` ${tile.tile_name}` : ""}
-            </span>
+        const dateObj = tile.takenat ? new Date(tile.takenat) : null;
 
-            <span class="special-tile-points">
-                ${tile.points || 0} pkt
-                ${tile.taken ? " • Zajęty" : " • Wolny"}
-            </span>
-        `;
+        const takenDate = dateObj ? dateObj.toLocaleDateString("pl-PL") : "";
+        const takenTime = dateObj ? dateObj.toLocaleTimeString("pl-PL") : "";
+
+row.innerHTML = `
+    <span class="special-tile-name">
+        #${tile.special_number || tile.id}${tile.tile_name ? ` ${tile.tile_name}` : ""}
+    </span>
+
+    ${
+        tile.taken
+            ? `
+                <span class="special-tile-points">
+                    ${tile.nickname || "Zajęty"}
+                </span>
+
+                <span class="special-tile-points">
+                    ${takenDate}
+                </span>
+
+                <span class="special-tile-points">
+                    ${takenTime}
+                </span>
+
+                ${
+                    tile.screenshot_url
+                        ? `<span class="special-tile-points">📷 Screen</span>`
+                        : `<span class="special-tile-points">Brak screena</span>`
+                }
+            `
+            : `
+                <span class="special-tile-points">
+                    ${tile.points || 0} pkt • Wolny
+                </span>
+            `
+    }
+`;
 
         row.onclick = () => {
             if(tile.taken){
