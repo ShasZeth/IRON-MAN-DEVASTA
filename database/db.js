@@ -68,6 +68,13 @@ async function initDatabase() {
         `);
 
         await pool.query(`
+            UPDATE tiles
+            SET tile_number = id
+            WHERE COALESCE(is_special, 0) = 0
+            AND tile_number IS NULL
+        `);
+
+        await pool.query(`
             ALTER TABLE tiles
             ADD COLUMN IF NOT EXISTS unlock_at TIMESTAMP
         `);
