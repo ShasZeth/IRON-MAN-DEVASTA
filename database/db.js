@@ -64,6 +64,11 @@ async function initDatabase() {
 
         await pool.query(`
             ALTER TABLE tiles
+            ADD COLUMN IF NOT EXISTS special_number INTEGER
+        `);
+
+        await pool.query(`
+            ALTER TABLE tiles
             ADD COLUMN IF NOT EXISTS unlock_at TIMESTAMP
         `);
 

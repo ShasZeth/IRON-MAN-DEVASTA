@@ -252,6 +252,7 @@ router.post("/create", auth, (req, res) => {
     const { tileName, points, isSpecial } = req.body;
 
     const parsedPoints = Number(points || 0);
+    const specialFlag = isSpecial ? 1 : 0;
 
     if(!Number.isInteger(parsedPoints) || parsedPoints < 0){
         return res.status(400).json({
@@ -261,10 +262,13 @@ router.post("/create", auth, (req, res) => {
 
     db.get(
         `
-        SELECT COALESCE(MAX(id), 0) + 1 AS next_id
+        SELECT 
+            COALESCE(MAX(id), 0) + 1 AS next_id,
+            COALESCE(MAX(special_number), 0) + 1 AS next_special_number
         FROM tiles
+        WHERE COALESCE(is_special, 0) = ?
         `,
-        [],
+        [specialFlag],
         (err, row) => {
             if(err){
                 console.error("CREATE TILE MAX ID ERROR:", err);
@@ -274,17 +278,19 @@ router.post("/create", auth, (req, res) => {
             }
 
             const nextId = row.next_id;
+            const nextSpecialNumber = specialFlag ? row.next_special_number : null;
 
             db.run(
                 `
-                INSERT INTO tiles (id, taken, tile_name, points, is_special)
-                VALUES (?, 0, ?, ?, ?)
+                INSERT INTO tiles (id, taken, tile_name, points, is_special, special_number)
+                VALUES (?, 0, ?, ?, ?, ?)
                 `,
                 [
                     nextId,
                     tileName ? tileName.trim() : "",
                     parsedPoints,
-                    isSpecial ? 1 : 0
+                    specialFlag,
+                    nextSpecialNumber
                 ],
                 function(err){
                     if(err){
@@ -295,7 +301,9 @@ router.post("/create", auth, (req, res) => {
                     }
 
                     res.json({
-                        message:`Utworzono kafelek #${nextId}.`
+                        message: specialFlag
+                            ? `Utworzono kafelek bonusowy #${nextSpecialNumber}.`
+                            : `Utworzono kafelek #${nextId}.`
                     });
                 }
             );

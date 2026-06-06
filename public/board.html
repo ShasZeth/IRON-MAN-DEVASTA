@@ -1140,7 +1140,7 @@ function renderSpecialTiles(specialTiles){
 
         row.innerHTML = `
             <span class="special-tile-name">
-                #${tile.id}${tile.tile_name ? ` ${tile.tile_name}` : ""}
+                #${tile.special_number || tile.id}${tile.tile_name ? ` ${tile.tile_name}` : ""}
             </span>
 
             <span class="special-tile-points">
