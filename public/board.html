@@ -679,6 +679,53 @@ body{
     font-weight:bold;
 }
 
+/* TOAST POWIADOMIENIA */
+
+.custom-toast{
+    position:fixed;
+    top:20px;
+    right:20px;
+    z-index:100000;
+
+    min-width:260px;
+    max-width:420px;
+    padding:14px 18px;
+
+    border-radius:8px;
+    color:#fff;
+    font-weight:bold;
+    text-shadow:1px 1px 2px black;
+    box-shadow:0 0 18px rgba(0,0,0,.85);
+
+    opacity:0;
+    transform:translateY(-20px);
+    pointer-events:none;
+
+    transition:
+        opacity .25s ease,
+        transform .25s ease;
+}
+
+.custom-toast.show{
+    opacity:1;
+    transform:translateY(0);
+}
+
+.custom-toast.success{
+    background:linear-gradient(145deg, #0b5f25, #168a3a);
+    border:2px solid #39d353;
+}
+
+.custom-toast.error{
+    background:linear-gradient(145deg, #6e0000, #b80000);
+    border:2px solid #ff4d4d;
+}
+
+.custom-toast.info{
+    background:linear-gradient(145deg, #4a3500, #b8860b);
+    border:2px solid #ffd700;
+}
+
 @media(max-width:800px){
     body{
         display:block;
@@ -824,6 +871,28 @@ function showRules(){
 
 function closeRules(){
     document.getElementById("rulesModal").style.display = "none";
+}
+
+
+function showToast(message, type = "success"){
+    const toast = document.createElement("div");
+
+    toast.className = `custom-toast ${type}`;
+    toast.innerText = message || "Zapisano zmiany";
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.classList.add("show");
+    }, 10);
+
+    setTimeout(() => {
+        toast.classList.remove("show");
+
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+    }, 2500);
 }
 
 function toggleNewTileLockOptions(){
@@ -1158,6 +1227,12 @@ async function saveAdminRenameTile(tileId){
 
     const data = await response.json();
 
+    if(!response.ok){
+        showToast(data.message || "Wystąpił błąd.", "error");
+        return;
+    }
+
+    showToast(data.message || "Zapisano zmiany.", "success");
 
     closeTileModal();
 
@@ -1219,7 +1294,7 @@ async function saveAdminTilePoints(tileId){
     const parsedPoints = Number(input ? input.value : 0);
 
     if(!Number.isInteger(parsedPoints) || parsedPoints < 0){
-        alert("Punkty muszą być liczbą całkowitą większą lub równą 0.");
+        showToast("Punkty muszą być liczbą całkowitą większą lub równą 0.", "error");
         return;
     }
 
@@ -1238,6 +1313,12 @@ async function saveAdminTilePoints(tileId){
 
     const data = await response.json();
 
+    if(!response.ok){
+        showToast(data.message || "Wystąpił błąd.", "error");
+        return;
+    }
+
+    showToast(data.message || "Zapisano zmiany.", "success");
 
     closeTileModal();
     await loadTiles();
@@ -1284,6 +1365,12 @@ async function confirmAdminUnlockTile(tileId){
 
     const data = await response.json();
 
+    if(!response.ok){
+        showToast(data.message || "Wystąpił błąd.", "error");
+        return;
+    }
+
+    showToast(data.message || "Zapisano zmiany.", "success");
 
     closeTileModal();
     await loadTiles();
@@ -1291,7 +1378,7 @@ async function confirmAdminUnlockTile(tileId){
 
 function adminCreateTile(){
     if(!isAdmin()){
-        alert("Brak uprawnień administratora.");
+        showToast("Brak uprawnień administratora.", "error");
         return;
     }
 
@@ -1345,6 +1432,12 @@ async function confirmAdminDeleteTile(tileId){
 
     const data = await response.json();
 
+    if(!response.ok){
+        showToast(data.message || "Wystąpił błąd.", "error");
+        return;
+    }
+
+    showToast(data.message || "Zapisano zmiany.", "success");
 
     closeTileModal();
 
@@ -1354,7 +1447,7 @@ async function confirmAdminDeleteTile(tileId){
 
 async function saveNewTile(){
     if(!isAdmin()){
-        alert("Brak uprawnień administratora.");
+        showToast("Brak uprawnień administratora.", "error");
         return;
     }
 
@@ -1371,12 +1464,12 @@ async function saveNewTile(){
     const unlockMinutes = Number(unlockMinutesInput ? unlockMinutesInput.value : 0);
 
     if(!Number.isInteger(parsedPoints) || parsedPoints < 0){
-        alert("Punkty muszą być liczbą całkowitą większą lub równą 0.");
+        showToast("Punkty muszą być liczbą całkowitą większą lub równą 0.", "error");
         return;
     }
 
     if(isLocked && (!Number.isInteger(unlockMinutes) || unlockMinutes < 1)){
-        alert("Czas odblokowania musi być liczbą minut większą od 0.");
+        showToast("Czas odblokowania musi być liczbą minut większą od 0.", "error");
         return;
     }
 
@@ -1399,7 +1492,12 @@ async function saveNewTile(){
 
     const data = await response.json();
 
-    alert(data.message);
+    if(!response.ok){
+        showToast(data.message || "Wystąpił błąd.", "error");
+        return;
+    }
+
+    showToast(data.message || "Kafelek został utworzony.", "success");
 
     closeTileModal();
     await loadTiles();
@@ -1470,7 +1568,7 @@ function renderSpecialTiles(specialTiles){
 
         row.onclick = () => {
             if(locked && !isAdmin()){
-            alert(`Ten Bounty Bonus odblokuje się za ${getUnlockTimeLeft(tile)}.`);
+            showToast(`Ten Bounty Bonus odblokuje się za ${getUnlockTimeLeft(tile)}.`, "info");
             return;
         }
 
@@ -1752,12 +1850,12 @@ async function saveUserBonus(nickname){
     const adminPenalty = Number(penaltyInput ? penaltyInput.value : 0);
 
     if(!Number.isInteger(adminBonus) || adminBonus < 0){
-        alert("Premia administratora musi być liczbą całkowitą większą lub równą 0.");
+        showToast("Premia administratora musi być liczbą całkowitą większą lub równą 0.", "error");
         return;
     }
 
     if(!Number.isInteger(adminPenalty) || adminPenalty < 0){
-        alert("Kara punktowa musi być liczbą całkowitą większą lub równą 0.");
+        showToast("Kara punktowa musi być liczbą całkowitą większą lub równą 0.", "error");
         return;
     }
 
@@ -1775,6 +1873,12 @@ async function saveUserBonus(nickname){
 
     const data = await response.json();
 
+    if(!response.ok){
+        showToast(data.message || "Wystąpił błąd.", "error");
+        return;
+    }
+
+    showToast(data.message || "Zapisano zmiany.", "success");
 
     closeTileModal();
 
@@ -1886,7 +1990,7 @@ async function loadTiles(){
             const token = localStorage.getItem("token");
 
             if(!token){
-                alert("Najpierw się zaloguj");
+                showToast("Najpierw się zaloguj", "error");
                 window.location.href = "/";
                 return;
             }
@@ -1924,7 +2028,7 @@ if(isAdmin()){
 
 function openClaimTileModal(tile){
     if(isTileLocked(tile) && !isAdmin()){
-        alert(`Ten Bounty Bonus odblokuje się za ${getUnlockTimeLeft(tile)}.`);
+        showToast(`Ten Bounty Bonus odblokuje się za ${getUnlockTimeLeft(tile)}.`, "info");
         return;
     }
 
@@ -1975,14 +2079,14 @@ async function claimTile(tileId){
     const screenshotUrl = screenshotInput ? screenshotInput.value.trim() : "";
 
     if(!screenshotUrl){
-        alert("Musisz podać link do screenshota");
+        showToast("Musisz podać link do screenshota", "error");
         return;
     }
 
     const token = localStorage.getItem("token");
 
     if(!token){
-        alert("Najpierw się zaloguj");
+        showToast("Najpierw się zaloguj", "error");
         window.location.href = "/";
         return;
     }
@@ -2000,7 +2104,12 @@ async function claimTile(tileId){
 
     const data = await response.json();
 
-    alert(data.message);
+    if(!response.ok){
+        showToast(data.message || "Wystąpił błąd.", "error");
+        return;
+    }
+
+    showToast(data.message || "Kafelek został zajęty.", "success");
 
     closeTileModal();
     await loadTiles();
