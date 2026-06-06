@@ -899,6 +899,39 @@ function scheduleBonusCountdownRefresh(){
     }, 1000);
 }
 
+function escapeHtml(value){
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function getTileDisplayLabel(tile){
+    if(!tile){
+        return "Kafelek";
+    }
+
+    if(isSpecialTile(tile)){
+        return `Bonus #${tile.special_number || tile.id}`;
+    }
+
+    return `Kafelek #${tile.tile_number || tile.id}`;
+}
+
+function getAdminTileContext(tileId){
+    if(window.currentAdminTile && Number(window.currentAdminTile.id) === Number(tileId)){
+        return window.currentAdminTile;
+    }
+
+    return {
+        id:tileId,
+        tile_name:"",
+        points:0
+    };
+}
+
 function openTileModal(tile){
     if(tile.isNew){
         const html = `
@@ -986,16 +1019,16 @@ function openTileModal(tile){
         return;
     }
 
+    window.currentAdminTile = tile;
+
     const date = tile.takenat
         ? new Date(tile.takenat).toLocaleString("pl-PL")
         : "-";
 
-    const displayId = isSpecialTile(tile)
-        ? (tile.special_number || tile.id)
-        : (tile.tile_number || tile.id);
+    const displayLabel = getTileDisplayLabel(tile);
 
     let html = `
-        <h2>Kafelek #${displayId}</h2>
+        <h2>${displayLabel}</h2>
         <p><b>Status:</b> ${tile.taken ? "Zajęty" : "Wolny"}</p>
         <p><b>Właściciel:</b> ${tile.nickname || "-"}</p>
         <p><b>Data zajęcia:</b> ${date}</p>
@@ -1022,14 +1055,14 @@ function openTileModal(tile){
 
         <button
             class="modal-btn"
-            onclick="adminRenameTile(${tile.id}, '${tile.tile_name || ""}')"
+            onclick="adminRenameTile(${tile.id})"
         >
             ✏️ Zmień nazwę
         </button>
 
         <button
             class="modal-btn"
-            onclick="adminSetTilePoints(${tile.id}, ${tile.points || 0})"
+            onclick="adminSetTilePoints(${tile.id})"
         >
             ⭐ Ustaw punkty
         </button>
@@ -1054,43 +1087,58 @@ function openTileModal(tile){
     document.getElementById("tileModal").style.display = "block";
 }
 
+function adminRenameTile(tileId){
+    const tile = getAdminTileContext(tileId);
+    const displayLabel = getTileDisplayLabel(tile);
+    const currentName = tile.tile_name || "";
 
-async function adminUnlockTile(tileId){
-    const confirmUnlock = confirm(
-        `Czy na pewno chcesz odblokować kafelek #${tileId}?`
-    );
+    const html = `
+        <h2>✏️ Zmień nazwę</h2>
+        <p><b>Kafelek:</b> ${displayLabel}</p>
 
-    if(!confirmUnlock){
-        return;
-    }
+        <label class="tile-form-label" for="adminRenameInput">
+            Nowa nazwa kafelka:
+        </label>
 
-    const token = localStorage.getItem("token");
+        <input
+            id="adminRenameInput"
+            class="tile-form-input"
+            type="text"
+            value="${escapeHtml(currentName)}"
+            placeholder="Wpisz nazwę kafelka..."
+        >
 
-    const response = await fetch(`/api/tiles/unlock/${tileId}`, {
-        method:"POST",
-        headers:{
-            Authorization:`Bearer ${token}`
+        <hr>
+
+        <button
+            class="modal-btn modal-save"
+            onclick="saveAdminRenameTile(${tileId})"
+        >
+            💾 Zapisz nazwę
+        </button>
+
+        <button
+            class="modal-btn"
+            onclick="openTileModal(window.currentAdminTile)"
+        >
+            Anuluj
+        </button>
+    `;
+
+    document.getElementById("tileDetails").innerHTML = html;
+
+    setTimeout(() => {
+        const input = document.getElementById("adminRenameInput");
+        if(input){
+            input.focus();
+            input.select();
         }
-    });
-
-    const data = await response.json();
-
-    alert(data.message);
-
-    closeTileModal();
-    await loadTiles();
+    }, 50);
 }
 
-async function adminRenameTile(tileId, currentName){
-
-    const newName = prompt(
-        `Podaj dopisek do kafelka #${tileId}:`,
-        currentName
-    );
-
-    if(newName === null){
-        return;
-    }
+async function saveAdminRenameTile(tileId){
+    const input = document.getElementById("adminRenameInput");
+    const newName = input ? input.value.trim() : "";
 
     const token = localStorage.getItem("token");
 
@@ -1103,7 +1151,7 @@ async function adminRenameTile(tileId, currentName){
                 Authorization:`Bearer ${token}`
             },
             body:JSON.stringify({
-                tileName:newName.trim()
+                tileName:newName
             })
         }
     );
@@ -1117,18 +1165,59 @@ async function adminRenameTile(tileId, currentName){
     await loadTiles();
 }
 
-async function adminSetTilePoints(tileId, currentPoints){
+function adminSetTilePoints(tileId){
+    const tile = getAdminTileContext(tileId);
+    const displayLabel = getTileDisplayLabel(tile);
+    const currentPoints = Number(tile.points || 0);
 
-    const newPoints = prompt(
-        `Podaj liczbę punktów dla kafelka #${tileId}:`,
-        currentPoints || 0
-    );
+    const html = `
+        <h2>⭐ Ustaw punkty</h2>
+        <p><b>Kafelek:</b> ${displayLabel}</p>
 
-    if(newPoints === null){
-        return;
-    }
+        <label class="tile-form-label" for="adminTilePointsInput">
+            Punkty za zdobycie:
+        </label>
 
-    const parsedPoints = Number(newPoints);
+        <input
+            id="adminTilePointsInput"
+            class="tile-form-input"
+            type="number"
+            min="0"
+            step="1"
+            value="${currentPoints}"
+        >
+
+        <hr>
+
+        <button
+            class="modal-btn modal-save"
+            onclick="saveAdminTilePoints(${tileId})"
+        >
+            💾 Zapisz punkty
+        </button>
+
+        <button
+            class="modal-btn"
+            onclick="openTileModal(window.currentAdminTile)"
+        >
+            Anuluj
+        </button>
+    `;
+
+    document.getElementById("tileDetails").innerHTML = html;
+
+    setTimeout(() => {
+        const input = document.getElementById("adminTilePointsInput");
+        if(input){
+            input.focus();
+            input.select();
+        }
+    }, 50);
+}
+
+async function saveAdminTilePoints(tileId){
+    const input = document.getElementById("adminTilePointsInput");
+    const parsedPoints = Number(input ? input.value : 0);
 
     if(!Number.isInteger(parsedPoints) || parsedPoints < 0){
         alert("Punkty muszą być liczbą całkowitą większą lub równą 0.");
@@ -1156,6 +1245,53 @@ async function adminSetTilePoints(tileId, currentPoints){
     await loadTiles();
 }
 
+function adminUnlockTile(tileId){
+    const tile = getAdminTileContext(tileId);
+    const displayLabel = getTileDisplayLabel(tile);
+
+    const html = `
+        <h2>Odblokuj kafelek</h2>
+        <p>Czy na pewno chcesz odblokować <b>${displayLabel}</b>?</p>
+        <p>Po odblokowaniu właściciel, data zajęcia oraz screenshot zostaną usunięte.</p>
+
+        <hr>
+
+        <button
+            class="modal-btn modal-unlock"
+            onclick="confirmAdminUnlockTile(${tileId})"
+        >
+            Odblokuj kafelek
+        </button>
+
+        <button
+            class="modal-btn"
+            onclick="openTileModal(window.currentAdminTile)"
+        >
+            Anuluj
+        </button>
+    `;
+
+    document.getElementById("tileDetails").innerHTML = html;
+}
+
+async function confirmAdminUnlockTile(tileId){
+    const token = localStorage.getItem("token");
+
+    const response = await fetch(`/api/tiles/unlock/${tileId}`, {
+        method:"POST",
+        headers:{
+            Authorization:`Bearer ${token}`
+        }
+    });
+
+    const data = await response.json();
+
+    alert(data.message);
+
+    closeTileModal();
+    await loadTiles();
+}
+
 function adminCreateTile(){
     if(!isAdmin()){
         alert("Brak uprawnień administratora.");
@@ -1171,16 +1307,36 @@ function adminCreateTile(){
     });
 }
 
-async function adminDeleteTile(tileId){
+function adminDeleteTile(tileId){
+    const tile = getAdminTileContext(tileId);
+    const displayLabel = getTileDisplayLabel(tile);
 
-    const confirmDelete = confirm(
-        `Czy na pewno chcesz usunąć kafelek #${tileId}?`
-    );
+    const html = `
+        <h2>🗑 Usuń kafelek</h2>
+        <p>Czy na pewno chcesz usunąć <b>${displayLabel}</b>?</p>
+        <p style="color:#ff9999;"><b>Tej akcji nie da się cofnąć.</b></p>
 
-    if(!confirmDelete){
-        return;
-    }
+        <hr>
 
+        <button
+            class="modal-btn modal-delete"
+            onclick="confirmAdminDeleteTile(${tileId})"
+        >
+            🗑 Usuń kafelek
+        </button>
+
+        <button
+            class="modal-btn"
+            onclick="openTileModal(window.currentAdminTile)"
+        >
+            Anuluj
+        </button>
+    `;
+
+    document.getElementById("tileDetails").innerHTML = html;
+}
+
+async function confirmAdminDeleteTile(tileId){
     const token = localStorage.getItem("token");
 
     const response = await fetch(`/api/tiles/${tileId}`, {
@@ -1198,6 +1354,7 @@ async function adminDeleteTile(tileId){
 
     await loadTiles();
 }
+
 
 async function saveNewTile(){
     if(!isAdmin()){
