@@ -1164,25 +1164,29 @@ function updateRanking(tiles){
     const ranking = {};
 
     tiles.forEach(tile => {
-        if(tile.taken && tile.nickname){
-            if(!ranking[tile.nickname]){
-                ranking[tile.nickname] = {
-                    nickname: tile.nickname,
-                    points: 0,
-                    bonusPoints: Number(tile.bonus_points || 0),
-                    tiles: []
-                };
-            }
-
-            ranking[tile.nickname].points += Number(tile.points || 0);
-
-            ranking[tile.nickname].tiles.push({
-                id: tile.id,
-                tileName: tile.tile_name || "",
-                points: Number(tile.points || 0)
-            });
+    if(tile.taken && tile.nickname){
+        if(!ranking[tile.nickname]){
+            ranking[tile.nickname] = {
+                nickname: tile.nickname,
+                points: 0,
+                bonusPoints: Number(tile.bonus_points || 0),
+                tiles: []
+            };
         }
-    });
+
+        if(isSpecialTile(tile)){
+            ranking[tile.nickname].bonusPoints += Number(tile.points || 0);
+        }else{
+            ranking[tile.nickname].points += Number(tile.points || 0);
+        }
+
+        ranking[tile.nickname].tiles.push({
+            id: tile.id,
+            tileName: tile.tile_name || "",
+            points: Number(tile.points || 0)
+        });
+    }
+});
 
     const rankingArray = Object.values(ranking)
         .map(player => ({
