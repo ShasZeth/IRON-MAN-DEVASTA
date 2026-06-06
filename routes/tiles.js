@@ -163,7 +163,7 @@ router.patch("/:id", auth, (req, res) => {
     }
 
     const tileId = req.params.id;
-    const { tileName, points } = req.body;
+    const { tileName, points, isSpecial } = req.body;
 
     const cleanPoints = Number(points);
 
@@ -277,13 +277,14 @@ router.post("/create", auth, (req, res) => {
 
             db.run(
                 `
-                INSERT INTO tiles (id, taken, tile_name, points)
-                VALUES (?, 0, ?, ?)
+                INSERT INTO tiles (id, taken, tile_name, points, is_special)
+                VALUES (?, 0, ?, ?, ?)
                 `,
                 [
                     nextId,
                     tileName ? tileName.trim() : "",
-                    parsedPoints
+                    parsedPoints,
+                    isSpecial ? 1 : 0
                 ],
                 function(err){
                     if(err){

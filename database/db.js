@@ -33,6 +33,7 @@ async function initDatabase() {
                 takenat TIMESTAMP,
                 screenshot_url TEXT,
                 points INTEGER DEFAULT 0
+                is_special INTEGER DEFAULT 0
             )
         `);
 
@@ -57,6 +58,11 @@ async function initDatabase() {
         `);
 
         await pool.query(`
+            ALTER TABLE tiles
+            ADD COLUMN IF NOT EXISTS is_special INTEGER DEFAULT 0
+        `);
+
+        await pool.query(`
             CREATE TABLE IF NOT EXISTS tile_history (
                 id SERIAL PRIMARY KEY,
                 tile_id INTEGER,
@@ -64,6 +70,7 @@ async function initDatabase() {
                 action TEXT NOT NULL,
                 note TEXT,
                 created_at TIMESTAMP DEFAULT NOW()
+                
             )
         `);
 
