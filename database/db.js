@@ -73,11 +73,18 @@ async function initDatabase() {
         `);
 
         await pool.query(`
-            UPDATE tiles
-            SET tile_number = id
+            WITH numbered_tiles AS (
+            SELECT 
+            id,
+            ROW_NUMBER() OVER (ORDER BY id) AS new_tile_number
+            FROM tiles
             WHERE COALESCE(is_special, 0) = 0
-            AND tile_number IS NULL
-        `);
+    )
+    UPDATE tiles
+    SET tile_number = numbered_tiles.new_tile_number
+    FROM numbered_tiles
+    WHERE tiles.id = numbered_tiles.id
+`);
 
         await pool.query(`
             ALTER TABLE tiles

@@ -1256,8 +1256,12 @@ function updateRanking(tiles){
 
         ranking[tile.nickname].tiles.push({
             id: tile.id,
+            tileNumber: isSpecialTile(tile)
+                ? (tile.special_number || tile.id)
+                : (tile.tile_number || tile.id),
             tileName: tile.tile_name || "",
-            points: Number(tile.points || 0)
+            points: Number(tile.points || 0),
+            isSpecial: isSpecialTile(tile)
         });
     }
 });
@@ -1346,7 +1350,7 @@ function openPlayerProfile(nickname){
     const tilesHtml = player.tiles.length
         ? player.tiles.map(tile => `
             <li>
-                #${tile.id}${tile.tileName ? ` ${tile.tileName}` : ""}
+                #${tile.tileNumber || tile.id}${tile.tileName ? ` ${tile.tileName}` : ""}
                 — ${tile.points} pkt
             </li>
         `).join("")
@@ -1479,8 +1483,8 @@ async function loadTiles(){
         div.innerHTML = `
             <div class="tile-title">
                 ${tile.tile_name
-                    ? `#${tile.id} ${tile.tile_name}`
-                    : `#${tile.id}`
+                    ? `#${tile.tile_number || tile.id} ${tile.tile_name}`
+                    : `#${tile.tile_number || tile.id}`
                 }
             </div>
 
@@ -1508,8 +1512,8 @@ async function loadTiles(){
         div.innerHTML = `
             <div class="tile-title">
                 ${tile.tile_name
-                    ? `#${tile.id} ${tile.tile_name}`
-                    : `#${tile.id}`
+                    ? `#${tile.tile_number || tile.id} ${tile.tile_name}`
+                    : `#${tile.tile_number || tile.id}`
                 }
             </div>
 
@@ -1578,7 +1582,7 @@ if(isAdmin()){
 function openClaimTileModal(tile){
     const displayNumber = isSpecialTile(tile)
         ? `Bonus #${tile.special_number || tile.id}`
-        : `Kafelek #${tile.id}`;
+        : `Kafelek #${tile.tile_number || tile.id}`;
 
     const html = `
         <h2>${displayNumber}</h2>
