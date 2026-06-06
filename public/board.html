@@ -1317,17 +1317,17 @@ function renderSpecialTiles(specialTiles){
 
         row.onclick = () => {
             if(locked && !isAdmin()){
-                alert(`Ten Bounty Bonus odblokuje się za ${getUnlockTimeLeft(tile)}.`);
-                return;
-            }
+            alert(`Ten Bounty Bonus odblokuje się za ${getUnlockTimeLeft(tile)}.`);
+            return;
+        }
 
-            if(tile.taken || isAdmin()){
-                openTileModal(tile);
-                return;
-            }
+            if(tile.taken){
+            openTileModal(tile);
+            return;
+        }
 
-            openClaimTileModal(tile);
-        };
+    openClaimTileModal(tile);
+};
 
         if(isAdmin()){
             const editBtn = document.createElement("button");
