@@ -28,12 +28,15 @@ async function initDatabase() {
         await pool.query(`
             CREATE TABLE IF NOT EXISTS tiles (
                 id INTEGER PRIMARY KEY,
+                tile_number INTEGER,
                 taken INTEGER DEFAULT 0,
                 takenby INTEGER,
                 takenat TIMESTAMP,
                 screenshot_url TEXT,
                 points INTEGER DEFAULT 0,
-                is_special INTEGER DEFAULT 0
+                is_special INTEGER DEFAULT 0,
+                special_number INTEGER,
+                unlock_at TIMESTAMP
             )
         `);
 
@@ -73,20 +76,6 @@ async function initDatabase() {
         `);
 
         await pool.query(`
-            WITH numbered_tiles AS (
-            SELECT 
-            id,
-            ROW_NUMBER() OVER (ORDER BY id) AS new_tile_number
-            FROM tiles
-            WHERE COALESCE(is_special, 0) = 0
-    )
-    UPDATE tiles
-    SET tile_number = numbered_tiles.new_tile_number
-    FROM numbered_tiles
-    WHERE tiles.id = numbered_tiles.id
-`);
-
-        await pool.query(`
             ALTER TABLE tiles
             ADD COLUMN IF NOT EXISTS unlock_at TIMESTAMP
         `);
@@ -99,20 +88,33 @@ async function initDatabase() {
                 action TEXT NOT NULL,
                 note TEXT,
                 created_at TIMESTAMP DEFAULT NOW()
-                
             )
         `);
 
         for (let i = 1; i <= 50; i++) {
             await pool.query(
                 `
-                INSERT INTO tiles (id, taken)
-                VALUES ($1, 0)
+                INSERT INTO tiles (id, tile_number, taken)
+                VALUES ($1, $1, 0)
                 ON CONFLICT (id) DO NOTHING
                 `,
                 [i]
             );
         }
+
+        await pool.query(`
+            WITH numbered_tiles AS (
+                SELECT 
+                    id,
+                    ROW_NUMBER() OVER (ORDER BY id) AS new_tile_number
+                FROM tiles
+                WHERE COALESCE(is_special, 0) = 0
+            )
+            UPDATE tiles
+            SET tile_number = numbered_tiles.new_tile_number
+            FROM numbered_tiles
+            WHERE tiles.id = numbered_tiles.id
+        `);
 
         console.log("Połączono z PostgreSQL");
     } catch (err) {

@@ -176,6 +176,25 @@ body{
     transform:translateY(-1px);
 }
 
+.special-tile-row.special-tile-locked{
+    background:linear-gradient(145deg, #303030, #666);
+    border-color:#999;
+    color:#ddd;
+    opacity:.95;
+}
+
+.special-tile-row.special-tile-locked:hover{
+    box-shadow:0 0 10px rgba(180,180,180,.65);
+}
+
+.special-tile-row.special-tile-locked .special-tile-name{
+    color:#e0e0e0;
+}
+
+.special-tile-row.special-tile-locked .special-tile-points{
+    color:#f1f1f1;
+}
+
 .special-tile-name{
     display:block;
     color:#ffffff;
@@ -807,6 +826,76 @@ function closeRules(){
     document.getElementById("rulesModal").style.display = "none";
 }
 
+function toggleNewTileLockOptions(){
+    const specialInput = document.getElementById("newTileSpecialInput");
+    const lockOptions = document.getElementById("newTileLockOptions");
+
+    if(!lockOptions){
+        return;
+    }
+
+    lockOptions.style.display =
+        specialInput && specialInput.checked
+            ? "block"
+            : "none";
+}
+
+function isTileLocked(tile){
+    if(!tile || !tile.unlock_at){
+        return false;
+    }
+
+    return new Date(tile.unlock_at).getTime() > Date.now();
+}
+
+function getUnlockTimeLeft(tile){
+    if(!tile || !tile.unlock_at){
+        return "";
+    }
+
+    const diff = new Date(tile.unlock_at).getTime() - Date.now();
+
+    if(diff <= 0){
+        return "00:00";
+    }
+
+    const totalSeconds = Math.ceil(diff / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+
+    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function scheduleBonusCountdownRefresh(){
+    if(window.bonusCountdownTimer){
+        clearInterval(window.bonusCountdownTimer);
+    }
+
+    window.bonusCountdownTimer = setInterval(() => {
+        if(!window.currentSpecialTiles){
+            return;
+        }
+
+        const hasLockedTiles = window.currentSpecialTiles.some(tile => isTileLocked(tile));
+
+        if(!hasLockedTiles){
+            clearInterval(window.bonusCountdownTimer);
+            window.bonusCountdownTimer = null;
+            return;
+        }
+
+        renderSpecialTiles(window.currentSpecialTiles);
+
+        const hasJustUnlocked = window.currentSpecialTiles.some(tile => {
+            return tile.unlock_at && new Date(tile.unlock_at).getTime() <= Date.now();
+        });
+
+        if(hasJustUnlocked){
+            loadTiles();
+        }
+    }, 1000);
+}
+
 function openTileModal(tile){
     if(tile.isNew){
         const html = `
@@ -843,9 +932,33 @@ function openTileModal(tile){
                 <input
                     id="newTileSpecialInput"
                     type="checkbox"
+                    onchange="toggleNewTileLockOptions()"
                 >
                 ⭐ Kafelek specjalny — pokaż pod menu
             </label>
+
+            <div id="newTileLockOptions" style="display:none;">
+                <label class="tile-type-box">
+                    <input
+                        id="newTileLockedInput"
+                        type="checkbox"
+                    >
+                    🔒 Ukryj zadanie i odblokuj po czasie
+                </label>
+
+                <label class="tile-form-label" for="newTileUnlockMinutesInput">
+                    Odblokuj za ile minut?
+                </label>
+
+                <input
+                    id="newTileUnlockMinutesInput"
+                    class="tile-form-input"
+                    type="number"
+                    min="1"
+                    step="1"
+                    value="60"
+                >
+            </div>
 
             <hr>
 
@@ -1092,13 +1205,22 @@ async function saveNewTile(){
     const nameInput = document.getElementById("newTileNameInput");
     const pointsInput = document.getElementById("newTilePointsInput");
     const specialInput = document.getElementById("newTileSpecialInput");
+    const lockedInput = document.getElementById("newTileLockedInput");
+    const unlockMinutesInput = document.getElementById("newTileUnlockMinutesInput");
 
     const tileName = nameInput ? nameInput.value.trim() : "";
     const parsedPoints = Number(pointsInput ? pointsInput.value : 0);
     const isSpecial = specialInput ? specialInput.checked : false;
+    const isLocked = isSpecial && lockedInput ? lockedInput.checked : false;
+    const unlockMinutes = Number(unlockMinutesInput ? unlockMinutesInput.value : 0);
 
     if(!Number.isInteger(parsedPoints) || parsedPoints < 0){
         alert("Punkty muszą być liczbą całkowitą większą lub równą 0.");
+        return;
+    }
+
+    if(isLocked && (!Number.isInteger(unlockMinutes) || unlockMinutes < 1)){
+        alert("Czas odblokowania musi być liczbą minut większą od 0.");
         return;
     }
 
@@ -1113,7 +1235,9 @@ async function saveNewTile(){
         body:JSON.stringify({
             tileName:tileName,
             points:parsedPoints,
-            isSpecial:isSpecial
+            isSpecial:isSpecial,
+            isLocked:isLocked,
+            unlockMinutes:unlockMinutes
         })
     });
 
@@ -1141,6 +1265,8 @@ function renderSpecialTiles(specialTiles){
         return;
     }
 
+    window.currentSpecialTiles = specialTiles || [];
+
     if(!specialTiles || specialTiles.length === 0){
         list.innerHTML = `
             <p class="special-empty">
@@ -1156,34 +1282,49 @@ function renderSpecialTiles(specialTiles){
         const row = document.createElement("div");
         row.className = "special-tile-row";
 
-        const dateObj = tile.takenat ? new Date(tile.takenat) : null;
+        const locked = isTileLocked(tile);
 
-        const takenDate = dateObj ? dateObj.toLocaleDateString("pl-PL") : "";
-        const takenTime = dateObj ? dateObj.toLocaleTimeString("pl-PL") : "";
-
-row.innerHTML = `
-    <span class="special-tile-name">
-        #${tile.special_number || tile.id}${tile.tile_name ? ` ${tile.tile_name}` : ""}
-    </span>
-
-    <span class="special-tile-points">
-        ${tile.points || 0} pkt
-        ${
-            tile.taken
-                ? ` • Zajęty (${tile.nickname || "Nieznany"})`
-                : " • Wolny"
+        if(locked){
+            row.classList.add("special-tile-locked");
         }
-    </span>
-`;
+
+        const canSeeTask = isAdmin() || !locked;
+
+        const tileLabel = canSeeTask
+            ? `#${tile.special_number || tile.id}${tile.tile_name ? ` ${tile.tile_name}` : ""}`
+            : "🔒 Ukryte zadanie";
+
+        const statusLabel = locked
+            ? `Odblokuje się za ${getUnlockTimeLeft(tile)}`
+            : `${tile.points || 0} pkt ${
+                tile.taken
+                    ? ` • Zajęty (${tile.nickname || "Nieznany"})`
+                    : " • Wolny"
+            }`;
+
+        row.innerHTML = `
+            <span class="special-tile-name">
+                ${tileLabel}
+            </span>
+
+            <span class="special-tile-points">
+                ${statusLabel}
+            </span>
+        `;
 
         row.onclick = () => {
-            if(tile.taken){
+            if(locked && !isAdmin()){
+                alert(`Ten Bounty Bonus odblokuje się za ${getUnlockTimeLeft(tile)}.`);
+                return;
+            }
+
+            if(tile.taken || isAdmin()){
                 openTileModal(tile);
-            return;
-        }
+                return;
+            }
 
             openClaimTileModal(tile);
-    };
+        };
 
         if(isAdmin()){
             const editBtn = document.createElement("button");
@@ -1201,6 +1342,8 @@ row.innerHTML = `
 
         list.appendChild(row);
     });
+
+    scheduleBonusCountdownRefresh();
 }
 
 function updateStats(tiles){
@@ -1447,7 +1590,14 @@ async function saveUserBonus(nickname){
 
 
 async function loadTiles(){
-    const response = await fetch("/api/tiles");
+    const token = localStorage.getItem("token");
+    const tilesUrl = isAdmin() ? "/api/tiles/admin/all" : "/api/tiles";
+
+    const response = await fetch(tilesUrl, {
+        headers: token
+            ? { Authorization:`Bearer ${token}` }
+            : {}
+    });
     const tiles = await response.json();
 
     const regularTiles = tiles.filter(tile => !isSpecialTile(tile));
@@ -1580,6 +1730,11 @@ if(isAdmin()){
 }
 
 function openClaimTileModal(tile){
+    if(isTileLocked(tile) && !isAdmin()){
+        alert(`Ten Bounty Bonus odblokuje się za ${getUnlockTimeLeft(tile)}.`);
+        return;
+    }
+
     const displayNumber = isSpecialTile(tile)
         ? `Bonus #${tile.special_number || tile.id}`
         : `Kafelek #${tile.tile_number || tile.id}`;

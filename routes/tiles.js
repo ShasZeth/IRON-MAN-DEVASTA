@@ -163,7 +163,7 @@ router.patch("/:id", auth, (req, res) => {
     }
 
     const tileId = req.params.id;
-    const { tileName, points, isSpecial } = req.body;
+    const { tileName, points, isSpecial, isLocked, unlockMinutes } = req.body;
 
     const cleanPoints = Number(points);
 
@@ -249,16 +249,28 @@ router.post("/create", auth, (req, res) => {
         });
     }
 
-    const { tileName, points, isSpecial } = req.body;
+    const { tileName, points, isSpecial, isLocked, unlockMinutes } = req.body;
 
     const parsedPoints = Number(points || 0);
     const specialFlag = isSpecial ? 1 : 0;
+    const lockedFlag = specialFlag && isLocked ? 1 : 0;
+    const cleanUnlockMinutes = Number(unlockMinutes || 0);
 
     if(!Number.isInteger(parsedPoints) || parsedPoints < 0){
         return res.status(400).json({
             message:"Punkty muszą być liczbą całkowitą większą lub równą 0."
         });
     }
+
+    if(lockedFlag && (!Number.isInteger(cleanUnlockMinutes) || cleanUnlockMinutes < 1)){
+        return res.status(400).json({
+            message:"Czas odblokowania musi być liczbą minut większą od 0."
+        });
+    }
+
+    const unlockAt = lockedFlag
+        ? new Date(Date.now() + cleanUnlockMinutes * 60 * 1000)
+        : null;
 
     db.get(
         `
@@ -323,9 +335,10 @@ router.post("/create", auth, (req, res) => {
                                     tile_name,
                                     points,
                                     is_special,
-                                    special_number
+                                    special_number,
+                                    unlock_at
                                 )
-                                VALUES (?, ?, 0, ?, ?, ?, ?)
+                                VALUES (?, ?, 0, ?, ?, ?, ?, ?)
                                 `,
                                 [
                                     nextId,
@@ -333,7 +346,8 @@ router.post("/create", auth, (req, res) => {
                                     tileName ? tileName.trim() : "",
                                     parsedPoints,
                                     specialFlag,
-                                    nextSpecialNumber
+                                    nextSpecialNumber,
+                                    unlockAt
                                 ],
                                 function(err){
                                     if(err){
@@ -345,7 +359,9 @@ router.post("/create", auth, (req, res) => {
 
                                     res.json({
                                         message: specialFlag
-                                            ? `Utworzono kafelek bonusowy #${nextSpecialNumber}.`
+                                            ? (lockedFlag
+                                                ? `Utworzono ukryty kafelek bonusowy #${nextSpecialNumber}.`
+                                                : `Utworzono kafelek bonusowy #${nextSpecialNumber}.`)
                                             : `Utworzono kafelek #${nextTileNumber}.`
                                     });
                                 }
@@ -354,6 +370,38 @@ router.post("/create", auth, (req, res) => {
                     );
                 }
             );
+        }
+    );
+});
+
+
+router.get("/admin/all", auth, (req, res) => {
+    if(!req.user.isAdmin){
+        return res.status(403).json({
+            message:"Brak uprawnień administratora."
+        });
+    }
+
+    db.all(
+        `
+        SELECT 
+            tiles.*,
+            users.nickname,
+            COALESCE(users.bonus_points, 0) AS bonus_points
+        FROM tiles
+        LEFT JOIN users ON users.id = tiles.takenby
+        ORDER BY tiles.id
+        `,
+        [],
+        (err, rows) => {
+            if(err){
+                console.error("LOAD ADMIN TILES ERROR:", err);
+                return res.status(500).json({
+                    message:"Błąd pobierania kafelków."
+                });
+            }
+
+            res.json(rows);
         }
     );
 });
@@ -402,7 +450,33 @@ router.get("/", (req, res) => {
             });
         }
 
-        res.json(rows);
+        const now = Date.now();
+
+        const safeRows = rows.map(tile => {
+            const isSpecial = tile.is_special === 1 || tile.is_special === true;
+            const isLocked =
+                isSpecial &&
+                tile.unlock_at &&
+                new Date(tile.unlock_at).getTime() > now;
+
+            if(!isLocked){
+                return tile;
+            }
+
+            return {
+                ...tile,
+                tile_name: null,
+                points: 0,
+                screenshot_url: null,
+                nickname: null,
+                taken: 0,
+                takenby: null,
+                takenat: null,
+                is_locked: 1
+            };
+        });
+
+        res.json(safeRows);
       }
     );
 });
@@ -467,6 +541,17 @@ router.post("/:id", auth, (req, res) => {
                 return res.status(400).json({
                     success: false,
                     message: "Kafelek jest już zajęty"
+                });
+            }
+
+            if (
+                tile.is_special &&
+                tile.unlock_at &&
+                new Date(tile.unlock_at).getTime() > Date.now()
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Ten Bounty Bonus nie jest jeszcze odblokowany"
                 });
             }
 
