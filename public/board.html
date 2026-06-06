@@ -871,8 +871,19 @@ function scheduleBonusCountdownRefresh(){
         clearInterval(window.bonusCountdownTimer);
     }
 
-    window.bonusCountdownTimer = setInterval(() => {
+    window.bonusCountdownTimer = setInterval(async () => {
         if(!window.currentSpecialTiles){
+            return;
+        }
+
+        const hasJustUnlocked = window.currentSpecialTiles.some(tile => {
+            return tile.unlock_at && new Date(tile.unlock_at).getTime() <= Date.now();
+        });
+
+        if(hasJustUnlocked){
+            clearInterval(window.bonusCountdownTimer);
+            window.bonusCountdownTimer = null;
+            await loadTiles();
             return;
         }
 
@@ -885,14 +896,6 @@ function scheduleBonusCountdownRefresh(){
         }
 
         renderSpecialTiles(window.currentSpecialTiles);
-
-        const hasJustUnlocked = window.currentSpecialTiles.some(tile => {
-            return tile.unlock_at && new Date(tile.unlock_at).getTime() <= Date.now();
-        });
-
-        if(hasJustUnlocked){
-            loadTiles();
-        }
     }, 1000);
 }
 
