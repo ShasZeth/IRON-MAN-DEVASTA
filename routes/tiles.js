@@ -154,6 +154,54 @@ router.post("/points/:id", auth, (req, res) => {
     );
 });
 
+router.patch("/:id", auth, (req, res) => {
+    if (!req.user.isAdmin) {
+        return res.status(403).json({
+            success:false,
+            message:"Brak uprawnień administratora"
+        });
+    }
+
+    const tileId = req.params.id;
+    const { tileName, points } = req.body;
+
+    const cleanPoints = Number(points);
+
+    if (!Number.isInteger(cleanPoints) || cleanPoints < 0) {
+        return res.status(400).json({
+            success:false,
+            message:"Punkty muszą być liczbą całkowitą większą lub równą 0"
+        });
+    }
+
+    db.run(
+        `
+        UPDATE tiles
+        SET tile_name = ?,
+            points = ?
+        WHERE id = ?
+        `,
+        [
+            tileName?.trim() || "",
+            cleanPoints,
+            tileId
+        ],
+        function(err){
+            if(err){
+                return res.status(500).json({
+                    success:false,
+                    message:"Nie udało się edytować kafelka"
+                });
+            }
+
+            res.json({
+                success:true,
+                message:"Kafelek został zapisany"
+            });
+        }
+    );
+});
+
 router.post("/users/bonus-points", (req, res) => {
     const { nickname, bonusPoints } = req.body;
 
