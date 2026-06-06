@@ -194,7 +194,7 @@ router.post("/users/bonus-points", (req, res) => {
     );
 });
 
-router.post("/create", auth, (req, res) => {
+router.post("/create", auth, async (req, res) => {
     if(!req.user.isAdmin){
         return res.status(403).json({
             message:"Brak uprawnień administratora."
@@ -211,25 +211,36 @@ router.post("/create", auth, (req, res) => {
         });
     }
 
-    db.run(
-        `
-        INSERT INTO tiles (taken, takenby, screenshot_url, takenat, tile_name, points)
-        VALUES (0, NULL, NULL, NULL, ?, ?)
-        `,
-        [tileName ? tileName.trim() : "", parsedPoints],
-        function(err){
-            if(err){
-                console.error("CREATE TILE ERROR:", err);
-                return res.status(500).json({
-                    message:"Błąd tworzenia kafelka."
-                });
-            }
+    try{
+        const maxResult = await db.query(`
+            SELECT COALESCE(MAX(id), 0) + 1 AS next_id
+            FROM tiles
+        `);
 
-            res.json({
-                message:`Utworzono kafelek #${this.lastID}.`
-            });
-        }
-    );
+        const nextId = maxResult.rows[0].next_id;
+
+        await db.query(
+            `
+            INSERT INTO tiles (id, taken, tile_name, points)
+            VALUES ($1, 0, $2, $3)
+            `,
+            [
+                nextId,
+                tileName ? tileName.trim() : "",
+                parsedPoints
+            ]
+        );
+
+        res.json({
+            message:`Utworzono kafelek #${nextId}.`
+        });
+
+    }catch(error){
+        console.error("CREATE TILE ERROR:", error);
+        res.status(500).json({
+            message:"Błąd tworzenia kafelka."
+        });
+    }
 });
 
 router.get("/ranking/points", async (req, res) => {
