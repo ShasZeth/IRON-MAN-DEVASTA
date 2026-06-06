@@ -19,7 +19,7 @@ body{
 #gameUI{
     position:relative;
     width:1920px;
-    min-height:1080px;
+    height:1080px;
     flex-shrink:0;
 
     background:url("/img/iron-man-devasta-ui.png");
@@ -891,6 +891,23 @@ function updateStats(tiles){
     document.getElementById("progressText").innerText = `Zapełnienie: ${percent}%`;
 }
 
+function updateGameHeight(){
+
+    const gameUI = document.getElementById("gameUI");
+
+    const board = document.getElementById("board");
+
+    const boardBottom =
+        board.offsetTop +
+        board.offsetHeight;
+
+    const neededHeight =
+        boardBottom + 150;
+
+    gameUI.style.height =
+        Math.max(1080, neededHeight) + "px";
+}
+
 function updateRanking(tiles){
     const ranking = {};
 
@@ -1226,8 +1243,10 @@ async function loadTiles(){
 
         };
 
-        board.appendChild(div);
+         board.appendChild(div);
     });
+
+    updateGameHeight();
 }
 
 window.onclick = function(event){
