@@ -16,13 +16,52 @@ async function initDatabase() {
                 nickname TEXT UNIQUE NOT NULL,
                 password TEXT NOT NULL,
                 isadmin INTEGER DEFAULT 0,
-                created_at TIMESTAMP DEFAULT NOW()
+                created_at TIMESTAMP DEFAULT NOW(),
+                bonus_points INTEGER DEFAULT 0,
+                admin_bonus_points INTEGER DEFAULT 0,
+                admin_penalty_points INTEGER DEFAULT 0
             )
         `);
 
         await pool.query(`
             ALTER TABLE users
             ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()
+        `);
+
+        await pool.query(`
+            ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS bonus_points INTEGER DEFAULT 0
+        `);
+
+        await pool.query(`
+            ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS admin_bonus_points INTEGER DEFAULT 0
+        `);
+
+        await pool.query(`
+            ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS admin_penalty_points INTEGER DEFAULT 0
+        `);
+
+        /*
+            Jednorazowa migracja ze starego systemu:
+            bonus_points było wcześniej jedną wartością netto.
+            Jeśli ktoś miał wartość dodatnią, trafia jako premia admina.
+            Jeśli ktoś miał wartość ujemną, trafia jako kara punktowa.
+        */
+        await pool.query(`
+            UPDATE users
+            SET admin_bonus_points = CASE
+                    WHEN COALESCE(bonus_points, 0) > 0 THEN COALESCE(bonus_points, 0)
+                    ELSE 0
+                END,
+                admin_penalty_points = CASE
+                    WHEN COALESCE(bonus_points, 0) < 0 THEN ABS(COALESCE(bonus_points, 0))
+                    ELSE 0
+                END
+            WHERE COALESCE(admin_bonus_points, 0) = 0
+              AND COALESCE(admin_penalty_points, 0) = 0
+              AND COALESCE(bonus_points, 0) <> 0
         `);
 
         await pool.query(`
@@ -48,11 +87,6 @@ async function initDatabase() {
         await pool.query(`
             ALTER TABLE tiles
             ADD COLUMN IF NOT EXISTS points INTEGER DEFAULT 0
-        `);
-
-        await pool.query(`
-            ALTER TABLE users
-            ADD COLUMN IF NOT EXISTS bonus_points INTEGER DEFAULT 0
         `);
 
         await pool.query(`

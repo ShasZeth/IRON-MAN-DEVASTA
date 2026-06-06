@@ -203,9 +203,7 @@ router.patch("/:id", auth, (req, res) => {
 });
 
 router.post("/users/bonus-points", (req, res) => {
-    const { nickname, bonusPoints } = req.body;
-
-    const points = Number(bonusPoints);
+    const { nickname, adminBonusPoints, adminPenaltyPoints, bonusPoints } = req.body;
 
     if(!nickname){
         return res.status(400).json({
@@ -213,30 +211,61 @@ router.post("/users/bonus-points", (req, res) => {
         });
     }
 
-    if(!Number.isInteger(points)){
+    let cleanAdminBonus = Number(adminBonusPoints || 0);
+    let cleanAdminPenalty = Number(adminPenaltyPoints || 0);
+
+    /*
+        Kompatybilność ze starszym frontendem:
+        jeśli kiedyś wysyłaliśmy tylko bonusPoints jako jedną wartość,
+        rozbijamy ją na premię albo karę.
+    */
+    if(adminBonusPoints === undefined && adminPenaltyPoints === undefined && bonusPoints !== undefined){
+        const legacyPoints = Number(bonusPoints);
+
+        if(!Number.isInteger(legacyPoints)){
+            return res.status(400).json({
+                message:"Punkty muszą być liczbą całkowitą."
+            });
+        }
+
+        cleanAdminBonus = Math.max(legacyPoints, 0);
+        cleanAdminPenalty = Math.abs(Math.min(legacyPoints, 0));
+    }
+
+    if(!Number.isInteger(cleanAdminBonus) || cleanAdminBonus < 0){
         return res.status(400).json({
-            message:"Punkty muszą być liczbą całkowitą."
+            message:"Premia administratora musi być liczbą całkowitą większą lub równą 0."
         });
     }
+
+    if(!Number.isInteger(cleanAdminPenalty) || cleanAdminPenalty < 0){
+        return res.status(400).json({
+            message:"Kara punktowa musi być liczbą całkowitą większą lub równą 0."
+        });
+    }
+
+    const legacyNetPoints = cleanAdminBonus - cleanAdminPenalty;
 
     db.run(
         `
         UPDATE users
-        SET bonus_points = ?
+        SET admin_bonus_points = ?,
+            admin_penalty_points = ?,
+            bonus_points = ?
         WHERE nickname = ?
         `,
-        [points, nickname],
+        [cleanAdminBonus, cleanAdminPenalty, legacyNetPoints, nickname],
         function(err){
             if(err){
-                console.error("BONUS UPDATE ERROR:", err);
+                console.error("ADMIN POINTS UPDATE ERROR:", err);
 
                 return res.status(500).json({
-                    message:"Błąd zapisu bonusowych punktów."
+                    message:"Błąd zapisu punktów administratora."
                 });
             }
 
             return res.json({
-                message:"Bonusowe punkty użytkownika zostały zapisane."
+                message:"Punkty administratora zostały zapisane."
             });
         }
     );
@@ -387,7 +416,9 @@ router.get("/admin/all", auth, (req, res) => {
         SELECT 
             tiles.*,
             users.nickname,
-            COALESCE(users.bonus_points, 0) AS bonus_points
+            COALESCE(users.bonus_points, 0) AS bonus_points,
+            COALESCE(users.admin_bonus_points, 0) AS admin_bonus_points,
+            COALESCE(users.admin_penalty_points, 0) AS admin_penalty_points
         FROM tiles
         LEFT JOIN users ON users.id = tiles.takenby
         ORDER BY tiles.id
@@ -406,28 +437,36 @@ router.get("/admin/all", auth, (req, res) => {
     );
 });
 
-router.get("/ranking/points", async (req, res) => {
-    try {
-        const result = await pool.query(`
-            SELECT 
-                users.id,
-                users.nickname,
-                COALESCE(users.bonus_points, 0) AS bonus_points,
-                COALESCE(SUM(tiles.points), 0) AS tile_points,
-                COALESCE(SUM(tiles.points), 0) + COALESCE(users.bonus_points, 0) AS total_points
-            FROM users
-            LEFT JOIN tiles ON tiles.takenby = users.id AND tiles.taken = true
-            GROUP BY users.id, users.nickname, users.bonus_points
-            ORDER BY total_points DESC
-        `);
+router.get("/ranking/points", (req, res) => {
+    db.all(
+        `
+        SELECT 
+            users.id,
+            users.nickname,
+            COALESCE(users.admin_bonus_points, 0) AS admin_bonus_points,
+            COALESCE(users.admin_penalty_points, 0) AS admin_penalty_points,
+            COALESCE(SUM(CASE WHEN COALESCE(tiles.is_special, 0) = 0 THEN tiles.points ELSE 0 END), 0) AS tile_points,
+            COALESCE(SUM(CASE WHEN COALESCE(tiles.is_special, 0) = 1 THEN tiles.points ELSE 0 END), 0) AS bounty_points,
+            COALESCE(SUM(tiles.points), 0)
+                + COALESCE(users.admin_bonus_points, 0)
+                - COALESCE(users.admin_penalty_points, 0) AS total_points
+        FROM users
+        LEFT JOIN tiles ON tiles.takenby = users.id AND tiles.taken = 1
+        GROUP BY users.id, users.nickname, users.admin_bonus_points, users.admin_penalty_points
+        ORDER BY total_points DESC
+        `,
+        [],
+        (err, rows) => {
+            if(err){
+                console.error("RANKING POINTS ERROR:", err);
+                return res.status(500).json({
+                    message:"Błąd pobierania rankingu punktowego."
+                });
+            }
 
-        res.json(result.rows);
-    } catch(error){
-        console.error(error);
-        res.status(500).json({
-            message: "Błąd pobierania rankingu punktowego."
-        });
-    }
+            res.json(rows);
+        }
+    );
 });
 
 router.get("/", (req, res) => {
@@ -436,7 +475,9 @@ router.get("/", (req, res) => {
     SELECT 
         tiles.*,
         users.nickname,
-        COALESCE(users.bonus_points, 0) AS bonus_points
+        COALESCE(users.bonus_points, 0) AS bonus_points,
+            COALESCE(users.admin_bonus_points, 0) AS admin_bonus_points,
+            COALESCE(users.admin_penalty_points, 0) AS admin_penalty_points
     FROM tiles
     LEFT JOIN users ON users.id = tiles.takenby
     ORDER BY tiles.id
