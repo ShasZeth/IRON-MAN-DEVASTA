@@ -195,7 +195,29 @@ body{
     color:#ffd700;
     box-sizing:border-box;
 }
+/* Przycisk dodawania kafelka */
 
+#createTileBtn{
+    display:none;
+    margin:8px auto 15px auto;
+    padding:8px 16px;
+
+    border:1px solid #b8860b;
+    border-radius:6px;
+
+    background:rgba(20,20,20,.85);
+    color:#ffd700;
+
+    font-weight:bold;
+    cursor:pointer;
+
+    box-shadow:0 0 8px rgba(0,0,0,.8);
+}
+
+#createTileBtn:hover{
+    background:rgba(255,215,0,.15);
+    box-shadow:0 0 12px rgba(255,215,0,.5);
+}
 
 /* GŁÓWNA ZAWARTOŚĆ */
 
@@ -488,6 +510,12 @@ body{
             </div>
 
             <p id="progressText">Zapełnienie: 0%</p>
+
+            <button
+                id="createTileBtn"
+                onclick="adminCreateTile()">
+                ➕ Dodaj kafelek
+            </button>
         </div>
 
         <div id="board"></div>
@@ -713,6 +741,55 @@ async function adminSetTilePoints(tileId, currentPoints){
     alert(data.message);
 
     closeTileModal();
+    await loadTiles();
+}
+
+async function adminCreateTile(){
+    if(!isAdmin()){
+        alert("Brak uprawnień administratora.");
+        return;
+    }
+
+    const tileName = prompt("Podaj nazwę nowego kafelka:");
+
+    if(tileName === null){
+        return;
+    }
+
+    const pointsValue = prompt(
+        "Podaj liczbę punktów dla nowego kafelka:",
+        0
+    );
+
+    if(pointsValue === null){
+        return;
+    }
+
+    const parsedPoints = Number(pointsValue);
+
+    if(!Number.isInteger(parsedPoints) || parsedPoints < 0){
+        alert("Punkty muszą być liczbą całkowitą większą lub równą 0.");
+        return;
+    }
+
+    const token = localStorage.getItem("token");
+
+    const response = await fetch("/api/tiles/create", {
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json",
+            Authorization:`Bearer ${token}`
+        },
+        body:JSON.stringify({
+            tileName:tileName.trim(),
+            points:parsedPoints
+        })
+    });
+
+    const data = await response.json();
+
+    alert(data.message);
+
     await loadTiles();
 }
 
@@ -1081,6 +1158,10 @@ window.onclick = function(event){
         closeRules();
     }
 };
+
+if(isAdmin()){
+    document.getElementById("createTileBtn").style.display = "block";
+}
 
 loadTiles();
 </script>

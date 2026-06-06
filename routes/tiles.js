@@ -194,6 +194,44 @@ router.post("/users/bonus-points", (req, res) => {
     );
 });
 
+router.post("/create", auth, (req, res) => {
+    if(!req.user.isAdmin){
+        return res.status(403).json({
+            message:"Brak uprawnień administratora."
+        });
+    }
+
+    const { tileName, points } = req.body;
+
+    const parsedPoints = Number(points || 0);
+
+    if(!Number.isInteger(parsedPoints) || parsedPoints < 0){
+        return res.status(400).json({
+            message:"Punkty muszą być liczbą całkowitą większą lub równą 0."
+        });
+    }
+
+    db.run(
+        `
+        INSERT INTO tiles (taken, takenby, screenshot_url, takenat, tile_name, points)
+        VALUES (0, NULL, NULL, NULL, ?, ?)
+        `,
+        [tileName ? tileName.trim() : "", parsedPoints],
+        function(err){
+            if(err){
+                console.error("CREATE TILE ERROR:", err);
+                return res.status(500).json({
+                    message:"Błąd tworzenia kafelka."
+                });
+            }
+
+            res.json({
+                message:`Utworzono kafelek #${this.lastID}.`
+            });
+        }
+    );
+});
+
 router.get("/ranking/points", async (req, res) => {
     try {
         const result = await pool.query(`
