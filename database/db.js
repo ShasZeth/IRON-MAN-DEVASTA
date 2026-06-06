@@ -32,7 +32,7 @@ async function initDatabase() {
                 takenby INTEGER,
                 takenat TIMESTAMP,
                 screenshot_url TEXT,
-                points INTEGER DEFAULT 0
+                points INTEGER DEFAULT 0,
                 is_special INTEGER DEFAULT 0
             )
         `);
