@@ -1517,31 +1517,7 @@ async function loadTiles(){
                 return;
             }
 
-            const screenshotUrl = prompt(
-                `Wklej link do screenshota dla kafelka #${tile.id}:`
-            );
-
-            if(!screenshotUrl || screenshotUrl.trim() === ""){
-                alert("Musisz podać link do screenshota");
-                return;
-            }
-
-            const claimResponse = await fetch(`/api/tiles/${tile.id}`, {
-                method:"POST",
-                headers:{
-                    "Content-Type":"application/json",
-                    Authorization:`Bearer ${token}`
-                },
-                body:JSON.stringify({
-                    screenshotUrl:screenshotUrl.trim()
-                })
-            });
-
-            const data = await claimResponse.json();
-
-            alert(data.message);
-
-            await loadTiles();
+            openClaimTileModal(tile);
 
         };
 
@@ -1565,6 +1541,85 @@ window.onclick = function(event){
 
 if(isAdmin()){
     document.getElementById("createTileBtn").style.display = "block";
+}
+
+function openClaimTileModal(tile){
+    const displayNumber = isSpecialTile(tile)
+        ? `Bonus #${tile.special_number || tile.id}`
+        : `Kafelek #${tile.id}`;
+
+    const html = `
+        <h2>${displayNumber}</h2>
+
+        <p><b>Status:</b> Wolny</p>
+        <p><b>Punkty za zdobycie:</b> ${tile.points || 0} pkt</p>
+
+        <label class="tile-form-label" for="claimScreenshotInput">
+            Link do screenshota:
+        </label>
+
+        <input
+            id="claimScreenshotInput"
+            class="tile-form-input"
+            type="text"
+            placeholder="Wklej link do screenshota..."
+        >
+
+        <hr>
+
+        <button
+            class="modal-btn modal-save"
+            onclick="claimTile(${tile.id})"
+        >
+            📷 Zajmij kafelek
+        </button>
+    `;
+
+    document.getElementById("tileDetails").innerHTML = html;
+    document.getElementById("tileModal").style.display = "block";
+
+    setTimeout(() => {
+        const input = document.getElementById("claimScreenshotInput");
+        if(input){
+            input.focus();
+        }
+    }, 50);
+}
+
+async function claimTile(tileId){
+    const screenshotInput = document.getElementById("claimScreenshotInput");
+    const screenshotUrl = screenshotInput ? screenshotInput.value.trim() : "";
+
+    if(!screenshotUrl){
+        alert("Musisz podać link do screenshota");
+        return;
+    }
+
+    const token = localStorage.getItem("token");
+
+    if(!token){
+        alert("Najpierw się zaloguj");
+        window.location.href = "/";
+        return;
+    }
+
+    const response = await fetch(`/api/tiles/${tileId}`, {
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json",
+            Authorization:`Bearer ${token}`
+        },
+        body:JSON.stringify({
+            screenshotUrl:screenshotUrl
+        })
+    });
+
+    const data = await response.json();
+
+    alert(data.message);
+
+    closeTileModal();
+    await loadTiles();
 }
 
 loadTiles();
