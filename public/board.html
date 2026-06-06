@@ -860,14 +860,18 @@ function openTileModal(tile){
         ? new Date(tile.takenat).toLocaleString("pl-PL")
         : "-";
 
+    const displayId = isSpecialTile(tile)
+        ? (tile.special_number || tile.id)
+        : (tile.tile_number || tile.id);
+
     let html = `
-        <h2>Kafelek #${tile.id}</h2>
+        <h2>Kafelek #${displayId}</h2>
         <p><b>Status:</b> ${tile.taken ? "Zajęty" : "Wolny"}</p>
         <p><b>Właściciel:</b> ${tile.nickname || "-"}</p>
         <p><b>Data zajęcia:</b> ${date}</p>
         <p><b>Punkty za zdobycie:</b> ${tile.points || 0} pkt</p>
         <p><b>Typ:</b> ${isSpecialTile(tile) ? "Specjalny" : "Zwykły"}</p>
-    `;
+`;
 
     if(tile.screenshot_url){
         html += `
