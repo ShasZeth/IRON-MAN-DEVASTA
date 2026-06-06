@@ -1389,13 +1389,14 @@ function updateRanking(tiles){
             ranking[tile.nickname] = {
                 nickname: tile.nickname,
                 points: 0,
-                bonusPoints: Number(tile.bonus_points || 0),
+                bountyPoints: 0,
+                adminAdjustment: Number(tile.bonus_points || 0),
                 tiles: []
             };
         }
 
         if(isSpecialTile(tile)){
-            ranking[tile.nickname].bonusPoints += Number(tile.points || 0);
+            ranking[tile.nickname].bountyPoints += Number(tile.points || 0);
         }else{
             ranking[tile.nickname].points += Number(tile.points || 0);
         }
@@ -1417,7 +1418,8 @@ function updateRanking(tiles){
             ...player,
             totalPoints:
                 Number(player.points || 0) +
-                Number(player.bonusPoints || 0)
+                Number(player.bountyPoints || 0) +
+                Number(player.adminAdjustment || 0)
         }))
         .sort((a, b) => b.totalPoints - a.totalPoints);
 
@@ -1467,14 +1469,14 @@ function updateRanking(tiles){
 
                 <strong
                     class="ranking-score"
-                    title="Punkty za kafelki: ${player.points}&#10;Punkty bonusowe: ${player.bonusPoints}&#10;Suma: ${player.totalPoints}"
+                    title="Punkty za kafelki: ${player.points}&#10;Punkty Bounty Bonus: ${player.bountyPoints}&#10;Korekta admina: ${player.adminAdjustment}&#10;Suma: ${player.totalPoints}"
                 >
                     ${player.totalPoints} pkt
 
                     ${isAdmin() ? `
                         <button
                             class="admin-bonus-btn"
-                            onclick="event.stopPropagation(); openUserPointsModal('${player.nickname}', ${player.bonusPoints || 0}, ${player.points || 0})">
+                            onclick="event.stopPropagation(); openUserPointsModal('${player.nickname}', ${player.adminAdjustment || 0}, ${player.points || 0}, ${player.bountyPoints || 0})">
                             ⭐
                         </button>
                     ` : ""}
@@ -1506,7 +1508,8 @@ function openPlayerProfile(nickname){
         <h2>👤 ${player.nickname}</h2>
 
         <p><b>Punkty za kafelki:</b> ${player.points} pkt</p>
-        <p><b>Punkty bonusowe:</b> ${player.bonusPoints} pkt</p>
+        <p><b>Punkty Bounty Bonus:</b> ${player.bountyPoints} pkt</p>
+        <p><b>Korekta admina:</b> ${player.adminAdjustment} pkt</p>
         <p><b>Suma:</b> ${player.totalPoints} pkt</p>
 
         <hr>
@@ -1522,34 +1525,49 @@ function openPlayerProfile(nickname){
     document.getElementById("tileModal").style.display = "block";
 }
 
-function openUserPointsModal(nickname, currentBonus, tilePoints){
+function openUserPointsModal(nickname, currentAdjustment, tilePoints, bountyPoints){
+    const adminBonus = Math.max(Number(currentAdjustment || 0), 0);
+    const adminPenalty = Math.abs(Math.min(Number(currentAdjustment || 0), 0));
+
     const total =
         Number(tilePoints || 0) +
-        Number(currentBonus || 0);
+        Number(bountyPoints || 0) +
+        Number(currentAdjustment || 0);
 
     const html = `
         <h2>👤 ${nickname}</h2>
 
-        <p>
-            <b>Punkty za kafelki:</b>
-            ${tilePoints} pkt
-        </p>
+        <p><b>Punkty za zwykłe kafelki:</b> ${tilePoints} pkt</p>
+        <p><b>Punkty Bounty Bonus:</b> ${bountyPoints} pkt</p>
 
-        <p>
-            <b>Punkty bonusowe:</b>
-        </p>
+        <hr>
+
+        <label class="tile-form-label" for="adminBonusInput">
+            Punkty dodane przez administratora:
+        </label>
 
         <input
-            id="bonusInput"
+            id="adminBonusInput"
             class="bonus-input"
             type="number"
-            value="${currentBonus}"
+            min="0"
+            value="${adminBonus}"
         >
 
-        <p>
-            <b>Suma:</b>
-            ${total} pkt
-        </p>
+        <label class="tile-form-label" for="adminPenaltyInput">
+            Punkty ujemne / kara:
+        </label>
+
+        <input
+            id="adminPenaltyInput"
+            class="bonus-input"
+            type="number"
+            min="0"
+            value="${adminPenalty}"
+        >
+
+        <p><b>Korekta admina:</b> ${currentAdjustment} pkt</p>
+        <p><b>Suma:</b> ${total} pkt</p>
 
         <button
             class="modal-btn"
@@ -1563,13 +1581,23 @@ function openUserPointsModal(nickname, currentBonus, tilePoints){
 }
 
 async function saveUserBonus(nickname){
-    const bonusInput = document.getElementById("bonusInput");
-    const bonusPoints = Number(bonusInput.value);
+    const bonusInput = document.getElementById("adminBonusInput");
+    const penaltyInput = document.getElementById("adminPenaltyInput");
 
-    if(!Number.isInteger(bonusPoints)){
-        alert("Punkty bonusowe muszą być liczbą całkowitą.");
+    const adminBonus = Number(bonusInput ? bonusInput.value : 0);
+    const adminPenalty = Number(penaltyInput ? penaltyInput.value : 0);
+
+    if(!Number.isInteger(adminBonus) || adminBonus < 0){
+        alert("Punkty dodane muszą być liczbą całkowitą większą lub równą 0.");
         return;
     }
+
+    if(!Number.isInteger(adminPenalty) || adminPenalty < 0){
+        alert("Punkty ujemne muszą być liczbą całkowitą większą lub równą 0.");
+        return;
+    }
+
+    const finalAdjustment = adminBonus - adminPenalty;
 
     const response = await fetch("/api/tiles/users/bonus-points", {
         method:"POST",
@@ -1578,7 +1606,7 @@ async function saveUserBonus(nickname){
         },
         body:JSON.stringify({
             nickname:nickname,
-            bonusPoints:bonusPoints
+            bonusPoints:finalAdjustment
         })
     });
 
