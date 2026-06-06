@@ -68,6 +68,11 @@ async function initDatabase() {
         `);
 
         await pool.query(`
+            ALTER TABLE tiles
+            ADD COLUMN IF NOT EXISTS tile_number INTEGER
+        `);
+
+        await pool.query(`
             UPDATE tiles
             SET tile_number = id
             WHERE COALESCE(is_special, 0) = 0
