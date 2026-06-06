@@ -1150,8 +1150,13 @@ function renderSpecialTiles(specialTiles){
         `;
 
         row.onclick = () => {
-            openTileModal(tile);
-        };
+            if(tile.taken){
+                openTileModal(tile);
+            return;
+        }
+
+            openClaimTileModal(tile);
+    };
 
         if(isAdmin()){
             const editBtn = document.createElement("button");
