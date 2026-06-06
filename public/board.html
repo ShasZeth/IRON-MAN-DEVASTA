@@ -1469,7 +1469,7 @@ function updateRanking(tiles){
 
                 <strong
                     class="ranking-score"
-                    title="Punkty za kafelki: ${player.points}&#10;Punkty Bounty Bonus: ${player.bountyPoints}&#10;Korekta admina: ${player.adminAdjustment}&#10;Suma: ${player.totalPoints}"
+                    title="Punkty za kafelki: ${player.points}&#10;Punkty Bounty Bonus: ${player.bountyPoints}&#10;Premia administratora: ${Math.max(Number(player.adminAdjustment || 0), 0)}&#10;Kara punktowa: -${Math.abs(Math.min(Number(player.adminAdjustment || 0), 0))}&#10;Suma: ${player.totalPoints}"
                 >
                     ${player.totalPoints} pkt
 
@@ -1509,7 +1509,8 @@ function openPlayerProfile(nickname){
 
         <p><b>Punkty za kafelki:</b> ${player.points} pkt</p>
         <p><b>Punkty Bounty Bonus:</b> ${player.bountyPoints} pkt</p>
-        <p><b>Korekta admina:</b> ${player.adminAdjustment} pkt</p>
+        <p><b>Premia administratora:</b> ${Math.max(Number(player.adminAdjustment || 0), 0)} pkt</p>
+        <p><b>Kara punktowa:</b> -${Math.abs(Math.min(Number(player.adminAdjustment || 0), 0))} pkt</p>
         <p><b>Suma:</b> ${player.totalPoints} pkt</p>
 
         <hr>
@@ -1555,7 +1556,7 @@ function openUserPointsModal(nickname, currentAdjustment, tilePoints, bountyPoin
         >
 
         <label class="tile-form-label" for="adminPenaltyInput">
-            Punkty ujemne / kara:
+            Kara punktowa:
         </label>
 
         <input
@@ -1566,7 +1567,8 @@ function openUserPointsModal(nickname, currentAdjustment, tilePoints, bountyPoin
             value="${adminPenalty}"
         >
 
-        <p><b>Korekta admina:</b> ${currentAdjustment} pkt</p>
+        <p><b>Premia administratora:</b> ${adminBonus} pkt</p>
+        <p><b>Kara punktowa:</b> -${adminPenalty} pkt</p>
         <p><b>Suma:</b> ${total} pkt</p>
 
         <button
@@ -1593,7 +1595,7 @@ async function saveUserBonus(nickname){
     }
 
     if(!Number.isInteger(adminPenalty) || adminPenalty < 0){
-        alert("Punkty ujemne muszą być liczbą całkowitą większą lub równą 0.");
+        alert("Kara punktowa musi być liczbą całkowitą większą lub równą 0.");
         return;
     }
 
