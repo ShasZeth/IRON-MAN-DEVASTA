@@ -739,11 +739,18 @@ function updateRanking(tiles){
                 ranking[tile.nickname] = {
                     nickname: tile.nickname,
                     points: 0,
-                    bonusPoints: Number(tile.bonus_points || 0)
+                    bonusPoints: Number(tile.bonus_points || 0),
+                    tiles: []
                 };
             }
 
             ranking[tile.nickname].points += Number(tile.points || 0);
+
+            ranking[tile.nickname].tiles.push({
+                id: tile.id,
+                tileName: tile.tile_name || "",
+                points: Number(tile.points || 0)
+            });
         }
     });
 
@@ -755,6 +762,8 @@ function updateRanking(tiles){
                 Number(player.bonusPoints || 0)
         }))
         .sort((a, b) => b.totalPoints - a.totalPoints);
+
+    window.currentRanking = rankingArray;
 
     const rankingContent = document.getElementById("rankingContent");
 
@@ -781,11 +790,21 @@ function updateRanking(tiles){
             playerClass = "rank-bronze";
         }
 
+        const displayName =
+            index < 3
+                ? player.nickname
+                : `${index + 1}. ${player.nickname}`;
+
         return `
             <div class="ranking-row">
-                <span class="ranking-player ${playerClass}">
+                <span
+                    class="ranking-player ${playerClass}"
+                    onclick="openPlayerProfile('${player.nickname}')"
+                    title="Kliknij, aby zobaczyć profil gracza"
+                    style="cursor:pointer;"
+                >
                     ${trophy}
-                    ${index + 1}. ${player.nickname}
+                    ${displayName}
                 </span>
 
                 <strong
@@ -805,6 +824,44 @@ function updateRanking(tiles){
             </div>
         `;
     }).join("");
+}
+
+function openPlayerProfile(nickname){
+    const player =
+        window.currentRanking &&
+        window.currentRanking.find(p => p.nickname === nickname);
+
+    if(!player){
+        return;
+    }
+
+    const tilesHtml = player.tiles.length
+        ? player.tiles.map(tile => `
+            <li>
+                #${tile.id}${tile.tileName ? ` ${tile.tileName}` : ""}
+                — ${tile.points} pkt
+            </li>
+        `).join("")
+        : "<li>Brak zdobytych kafelków</li>";
+
+    const html = `
+        <h2>👤 ${player.nickname}</h2>
+
+        <p><b>Punkty za kafelki:</b> ${player.points} pkt</p>
+        <p><b>Punkty bonusowe:</b> ${player.bonusPoints} pkt</p>
+        <p><b>Suma:</b> ${player.totalPoints} pkt</p>
+
+        <hr>
+
+        <h3>Zdobyte kafelki:</h3>
+
+        <ul>
+            ${tilesHtml}
+        </ul>
+    `;
+
+    document.getElementById("tileDetails").innerHTML = html;
+    document.getElementById("tileModal").style.display = "block";
 }
 
 function openUserPointsModal(nickname, currentBonus, tilePoints){
