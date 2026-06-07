@@ -110,6 +110,18 @@ function getHiddenBoardTile(tile, boardLock){
 }
 
 
+function broadcastBoardUpdate(req, type = "BOARD_UPDATED", payload = {}){
+    const broadcast = req.app.get("broadcast");
+
+    if(broadcast){
+        broadcast({
+            type,
+            payload
+        });
+    }
+}
+
+
 
 router.get("/board-lock/status", (req, res) => {
     getBoardLockStatus((err, status) => {
@@ -157,6 +169,10 @@ router.post("/board-lock", auth, (req, res) => {
                 });
             }
 
+            broadcastBoardUpdate(req, "BOARD_LOCK_UPDATED", {
+                unlock_at: unlockAt
+            });
+
             res.json({
                 message:`Tablica została zablokowana na ${cleanMinutes} min.`,
                 unlock_at:unlockAt
@@ -186,6 +202,10 @@ router.post("/board-unlock", auth, (req, res) => {
                     message:"Błąd odblokowania tablicy."
                 });
             }
+
+            broadcastBoardUpdate(req, "BOARD_LOCK_UPDATED", {
+                unlock_at: null
+            });
 
             res.json({
                 message:"Tablica została odblokowana."
@@ -255,6 +275,10 @@ router.post("/unlock/:id", auth, (req, res) => {
                 () => {}
             );
 
+            broadcastBoardUpdate(req, "TILE_UPDATED", {
+                tileId: Number(tileId)
+            });
+
             res.json({
                 success: true,
                 message: "Kafelek odblokowany"
@@ -291,6 +315,10 @@ router.post("/rename-tile/:id", auth, (req, res) => {
                     message:"Nie udało się zmienić nazwy"
                 });
             }
+
+            broadcastBoardUpdate(req, "TILE_UPDATED", {
+                tileId: Number(tileId)
+            });
 
             res.json({
                 success:true,
@@ -335,6 +363,10 @@ router.post("/points/:id", auth, (req, res) => {
                     message:"Nie udało się zmienić punktów"
                 });
             }
+
+            broadcastBoardUpdate(req, "TILE_UPDATED", {
+                tileId: Number(tileId)
+            });
 
             res.json({
                 success:true,
@@ -383,6 +415,10 @@ router.patch("/:id", auth, (req, res) => {
                     message:"Nie udało się edytować kafelka"
                 });
             }
+
+            broadcastBoardUpdate(req, "TILE_UPDATED", {
+                tileId: Number(tileId)
+            });
 
             res.json({
                 success:true,
@@ -459,6 +495,10 @@ router.post("/users/bonus-points", auth, (req, res) => {
                     message:"Błąd zapisu punktów administratora."
                 });
             }
+
+            broadcastBoardUpdate(req, "BOARD_UPDATED", {
+                nickname
+            });
 
             return res.json({
                 message:"Punkty administratora zostały zapisane."
@@ -581,6 +621,10 @@ router.post("/create", auth, (req, res) => {
                                             message:"Błąd tworzenia kafelka."
                                         });
                                     }
+
+                                    broadcastBoardUpdate(req, "BOARD_UPDATED", {
+                                        tileId: Number(nextId)
+                                    });
 
                                     res.json({
                                         message: specialFlag
@@ -772,6 +816,10 @@ router.delete("/:id", auth, (req, res) => {
                 });
             }
 
+            broadcastBoardUpdate(req, "BOARD_UPDATED", {
+                tileId: Number(tileId)
+            });
+
             res.json({
                 success:true,
                 message:"Kafelek został usunięty"
@@ -875,14 +923,9 @@ router.post("/:id", auth, (req, res) => {
                         () => {}
                     );
 
-                    const broadcast = req.app.get("broadcast");
-
-                    if(broadcast){
-                        broadcast({
-                            type: "TILE_UPDATED",
-                            tileId: Number(tileId)
-                        });
-                    }
+                    broadcastBoardUpdate(req, "TILE_UPDATED", {
+                        tileId: Number(tileId)
+                    });
 
                     res.json({
                         success: true,
