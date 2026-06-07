@@ -2813,6 +2813,25 @@ document.addEventListener("keydown", (event) => {
 });
 
 loadTiles();
+
+setInterval(() => {
+    if(document.hidden){
+        return;
+    }
+
+    const tileModal = document.getElementById("tileModal");
+    const rulesModal = document.getElementById("rulesModal");
+    const screenshotLightbox = document.getElementById("screenshotLightbox");
+
+    const modalOpen =
+        (tileModal && tileModal.style.display === "block") ||
+        (rulesModal && rulesModal.style.display === "block") ||
+        (screenshotLightbox && screenshotLightbox.classList.contains("show"));
+
+    if(!modalOpen){
+        loadTiles();
+    }
+}, 2000);
 </script>
 
 </body>
