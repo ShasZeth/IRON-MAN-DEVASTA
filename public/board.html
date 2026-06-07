@@ -679,7 +679,8 @@ body{
     font-weight:bold;
 }
 
-/* PODGLĄD SCREENSHOTÓW */
+
+/* PREMIUM SCREENSHOT SYSTEM */
 
 .screenshot-preview-wrap{
     margin-top:10px;
@@ -717,13 +718,73 @@ body{
     font-size:13px;
 }
 
+.screenshot-preview-fallback{
+    display:none;
+    margin-top:8px;
+    color:#ffcc66;
+    font-size:13px;
+    line-height:1.35;
+}
+
+.screenshot-open-link{
+    display:inline-block;
+    margin-top:8px;
+}
+
+.claim-preview-box{
+    display:none;
+    margin:10px 0 12px 0;
+    padding:10px;
+
+    border:1px solid rgba(184,134,11,.7);
+    border-radius:8px;
+
+    background:rgba(0,0,0,.45);
+    text-align:center;
+}
+
+.claim-preview-title{
+    margin:0 0 8px 0;
+    color:#ffd700;
+    font-weight:bold;
+    font-size:13px;
+}
+
+.claim-preview-image{
+    display:none;
+    width:220px;
+    max-width:100%;
+    max-height:145px;
+    object-fit:cover;
+
+    border:2px solid #b8860b;
+    border-radius:8px;
+
+    cursor:pointer;
+    box-shadow:0 0 12px rgba(0,0,0,.85);
+}
+
+.claim-preview-status{
+    margin-top:8px;
+    color:#ffcc66;
+    font-size:13px;
+    line-height:1.35;
+}
+
+.claim-normalized-url{
+    margin-top:6px;
+    color:#cfcfcf;
+    font-size:11px;
+    word-break:break-all;
+}
+
 #screenshotLightbox{
     display:none;
     position:fixed;
     inset:0;
     z-index:120000;
 
-    background:rgba(0,0,0,.9);
+    background:rgba(0,0,0,.92);
 
     align-items:center;
     justify-content:center;
@@ -735,7 +796,7 @@ body{
     display:flex;
 }
 
-#screenshotLightbox img{
+#screenshotLightboxImage{
     max-width:92vw;
     max-height:88vh;
 
@@ -747,6 +808,9 @@ body{
         0 0 28px rgba(255,215,0,.35);
 
     background:#111;
+
+    transform:scale(1);
+    transition:transform .12s ease;
 }
 
 #screenshotLightboxClose{
@@ -782,18 +846,58 @@ body{
     box-shadow:0 0 12px rgba(0,0,0,.8);
 }
 
-.screenshot-preview-fallback{
-    display:none;
-    margin-top:8px;
-    color:#ffcc66;
-    font-size:13px;
-    line-height:1.35;
+.screenshot-lightbox-nav{
+    position:fixed;
+    top:50%;
+    transform:translateY(-50%);
+
+    width:54px;
+    height:70px;
+
+    border:none;
+    border-radius:10px;
+
+    background:rgba(184,134,11,.55);
+    color:#fff;
+
+    font-size:42px;
+    font-weight:bold;
+    cursor:pointer;
+
+    z-index:120001;
+    box-shadow:0 0 14px rgba(0,0,0,.85);
 }
 
-.screenshot-open-link{
-    display:inline-block;
-    margin-top:8px;
+.screenshot-lightbox-nav:hover{
+    background:rgba(255,215,0,.85);
+    color:#111;
 }
+
+#screenshotLightboxPrev{
+    left:24px;
+}
+
+#screenshotLightboxNext{
+    right:24px;
+}
+
+#screenshotLightboxCounter{
+    position:fixed;
+    top:24px;
+    left:50%;
+    transform:translateX(-50%);
+
+    color:#ffd700;
+    background:rgba(0,0,0,.65);
+
+    padding:7px 14px;
+    border:1px solid #b8860b;
+    border-radius:8px;
+
+    font-weight:bold;
+    z-index:120001;
+}
+
 
 /* TOAST POWIADOMIENIA */
 
@@ -953,9 +1057,38 @@ body{
 </div>
 
 
+
 <div id="screenshotLightbox" onclick="closeScreenshotLightbox(event)">
     <span id="screenshotLightboxClose" onclick="closeScreenshotLightbox(event)">×</span>
-    <img id="screenshotLightboxImage" src="" alt="Screenshot">
+
+    <div id="screenshotLightboxCounter"></div>
+
+    <button
+        id="screenshotLightboxPrev"
+        class="screenshot-lightbox-nav"
+        onclick="event.stopPropagation(); showPreviousScreenshot();"
+        title="Poprzedni screenshot"
+    >
+        ‹
+    </button>
+
+    <img
+        id="screenshotLightboxImage"
+        src=""
+        alt="Screenshot"
+        onclick="event.stopPropagation();"
+        onwheel="zoomScreenshotLightbox(event)"
+    >
+
+    <button
+        id="screenshotLightboxNext"
+        class="screenshot-lightbox-nav"
+        onclick="event.stopPropagation(); showNextScreenshot();"
+        title="Następny screenshot"
+    >
+        ›
+    </button>
+
     <a id="screenshotLightboxOpenNew" href="#" target="_blank" onclick="event.stopPropagation();">
         Otwórz w nowej karcie
     </a>
@@ -1022,6 +1155,7 @@ function showToast(message, type = "success"){
 
 
 
+
 function normalizeScreenshotUrl(url){
     if(!url){
         return "";
@@ -1041,6 +1175,7 @@ function normalizeScreenshotUrl(url){
         const parsed = new URL(cleanUrl);
         const host = parsed.hostname.replace(/^www\./, "").toLowerCase();
 
+        // Imgur page link -> direct image candidate
         if(host === "imgur.com" && !parsed.pathname.startsWith("/a/") && !parsed.pathname.startsWith("/gallery/")){
             const id = parsed.pathname.split("/").filter(Boolean).pop();
 
@@ -1050,12 +1185,14 @@ function normalizeScreenshotUrl(url){
             }
         }
 
+        // Dropbox share link -> raw image/file
         if(host === "dropbox.com"){
             parsed.searchParams.set("raw", "1");
             parsed.searchParams.delete("dl");
             return parsed.toString();
         }
 
+        // Google Drive file link -> direct view link
         if(host === "drive.google.com"){
             const match = cleanUrl.match(/\/file\/d\/([^/]+)/);
 
@@ -1064,6 +1201,7 @@ function normalizeScreenshotUrl(url){
             }
         }
 
+        // Discord / CDN / direct image links are kept as-is
         return cleanUrl;
     }catch(error){
         return cleanUrl;
@@ -1091,11 +1229,12 @@ function getScreenshotCandidateUrls(url){
     try{
         const parsed = new URL(originalUrl.startsWith("http") ? originalUrl : "https://" + originalUrl);
         const host = parsed.hostname.replace(/^www\./, "").toLowerCase();
+        const path = parsed.pathname || "";
 
         if(host === "imgur.com" || host === "i.imgur.com"){
-            const id = parsed.pathname.split("/").filter(Boolean).pop();
+            const id = path.split("/").filter(Boolean).pop();
 
-            if(id && !parsed.pathname.startsWith("/a/") && !parsed.pathname.startsWith("/gallery/")){
+            if(id && !path.startsWith("/a/") && !path.startsWith("/gallery/")){
                 const cleanId = id.split(".")[0];
 
                 ["jpg", "png", "jpeg", "webp", "gif"].forEach(ext => {
@@ -1103,6 +1242,10 @@ function getScreenshotCandidateUrls(url){
                 });
             }
         }
+
+        // Postimages direct pages often expose / image paths poorly client-side;
+        // we still keep original as fallback.
+        addCandidate(parsed.toString());
     }catch(error){}
 
     addCandidate(originalUrl);
@@ -1147,19 +1290,152 @@ function tryNextScreenshotCandidate(img){
     }
 }
 
+function getWorkingScreenshotUrlFromPreview(){
+    const preview = document.getElementById("claimScreenshotPreviewImage");
+
+    if(preview && preview.style.display !== "none" && preview.src){
+        return preview.src;
+    }
+
+    const input = document.getElementById("claimScreenshotInput");
+    return input ? normalizeScreenshotUrl(input.value.trim()) : "";
+}
+
+function updateClaimScreenshotPreview(){
+    const input = document.getElementById("claimScreenshotInput");
+    const box = document.getElementById("claimScreenshotPreviewBox");
+    const image = document.getElementById("claimScreenshotPreviewImage");
+    const status = document.getElementById("claimScreenshotPreviewStatus");
+    const normalizedText = document.getElementById("claimScreenshotNormalizedUrl");
+
+    if(!input || !box || !image || !status || !normalizedText){
+        return;
+    }
+
+    const rawUrl = input.value.trim();
+
+    if(!rawUrl){
+        box.style.display = "none";
+        image.style.display = "none";
+        image.src = "";
+        image.removeAttribute("data-candidates");
+        image.removeAttribute("data-index");
+        return;
+    }
+
+    const candidates = getScreenshotCandidateUrls(rawUrl);
+    const firstCandidate = candidates[0] || normalizeScreenshotUrl(rawUrl);
+
+    box.style.display = "block";
+    image.style.display = "inline-block";
+    image.setAttribute("data-candidates", JSON.stringify(candidates));
+    image.setAttribute("data-index", "0");
+    image.src = firstCandidate;
+
+    status.innerText = "Sprawdzam miniaturkę...";
+    status.style.color = "#ffcc66";
+
+    normalizedText.innerText = `Zapisany link: ${firstCandidate}`;
+}
+
+function claimPreviewLoaded(img){
+    const status = document.getElementById("claimScreenshotPreviewStatus");
+    const normalizedText = document.getElementById("claimScreenshotNormalizedUrl");
+
+    if(status){
+        status.innerText = "Miniaturka działa — możesz zająć kafelek.";
+        status.style.color = "#90ee90";
+    }
+
+    if(normalizedText && img && img.src){
+        normalizedText.innerText = `Zapisany link: ${img.src}`;
+    }
+}
+
+function claimPreviewError(img){
+    tryNextScreenshotCandidate(img);
+
+    setTimeout(() => {
+        if(img && img.style.display === "none"){
+            const status = document.getElementById("claimScreenshotPreviewStatus");
+
+            if(status){
+                status.innerText = "Nie udało się zrobić miniaturki. Link nadal można zapisać, ale podgląd może działać tylko przez przycisk otwarcia w nowej karcie.";
+                status.style.color = "#ff9999";
+            }
+        }
+    }, 50);
+}
+
+window.currentScreenshotGallery = [];
+window.currentScreenshotIndex = 0;
+window.currentScreenshotZoom = 1;
+
+function collectScreenshotGallery(activeUrl){
+    const images = Array.from(document.querySelectorAll(".screenshot-preview"))
+        .filter(img => img.src && img.style.display !== "none")
+        .map(img => img.src);
+
+    const uniqueImages = [];
+
+    images.forEach(url => {
+        if(url && !uniqueImages.includes(url)){
+            uniqueImages.push(url);
+        }
+    });
+
+    if(activeUrl && !uniqueImages.includes(activeUrl)){
+        uniqueImages.push(activeUrl);
+    }
+
+    window.currentScreenshotGallery = uniqueImages;
+    window.currentScreenshotIndex = Math.max(0, uniqueImages.indexOf(activeUrl));
+}
+
+function updateScreenshotLightboxImage(){
+    const image = document.getElementById("screenshotLightboxImage");
+    const openNew = document.getElementById("screenshotLightboxOpenNew");
+    const counter = document.getElementById("screenshotLightboxCounter");
+    const prev = document.getElementById("screenshotLightboxPrev");
+    const next = document.getElementById("screenshotLightboxNext");
+
+    const gallery = window.currentScreenshotGallery || [];
+    const index = window.currentScreenshotIndex || 0;
+    const url = gallery[index];
+
+    if(!url){
+        return;
+    }
+
+    window.currentScreenshotZoom = 1;
+
+    image.src = url;
+    image.style.transform = "scale(1)";
+    openNew.href = url;
+
+    if(counter){
+        counter.innerText = gallery.length > 1
+            ? `${index + 1} / ${gallery.length}`
+            : "Screenshot";
+    }
+
+    if(prev && next){
+        const display = gallery.length > 1 ? "block" : "none";
+        prev.style.display = display;
+        next.style.display = display;
+    }
+}
+
 function openScreenshotLightbox(url){
     if(!url){
         return;
     }
 
     const normalizedUrl = normalizeScreenshotUrl(url);
-
     const lightbox = document.getElementById("screenshotLightbox");
-    const image = document.getElementById("screenshotLightboxImage");
-    const openNew = document.getElementById("screenshotLightboxOpenNew");
 
-    image.src = normalizedUrl;
-    openNew.href = normalizedUrl;
+    collectScreenshotGallery(normalizedUrl);
+    updateScreenshotLightboxImage();
 
     lightbox.classList.add("show");
 }
@@ -1174,6 +1450,53 @@ function closeScreenshotLightbox(event){
 
     lightbox.classList.remove("show");
     image.src = "";
+    image.style.transform = "scale(1)";
+
+    window.currentScreenshotZoom = 1;
+}
+
+function showPreviousScreenshot(){
+    const gallery = window.currentScreenshotGallery || [];
+
+    if(gallery.length <= 1){
+        return;
+    }
+
+    window.currentScreenshotIndex =
+        (window.currentScreenshotIndex - 1 + gallery.length) % gallery.length;
+
+    updateScreenshotLightboxImage();
+}
+
+function showNextScreenshot(){
+    const gallery = window.currentScreenshotGallery || [];
+
+    if(gallery.length <= 1){
+        return;
+    }
+
+    window.currentScreenshotIndex =
+        (window.currentScreenshotIndex + 1) % gallery.length;
+
+    updateScreenshotLightboxImage();
+}
+
+function zoomScreenshotLightbox(event){
+    event.preventDefault();
+    event.stopPropagation();
+
+    const image = document.getElementById("screenshotLightboxImage");
+
+    if(!image){
+        return;
+    }
+
+    const direction = event.deltaY < 0 ? 0.12 : -0.12;
+
+    window.currentScreenshotZoom =
+        Math.min(3, Math.max(0.5, (window.currentScreenshotZoom || 1) + direction));
+
+    image.style.transform = `scale(${window.currentScreenshotZoom})`;
 }
 
 function getScreenshotPreviewHtml(url){
@@ -2365,11 +2688,39 @@ function openClaimTileModal(tile){
             class="tile-form-input"
             type="text"
             placeholder="Wklej link do screenshota, np. Imgur / Discord / .jpg / .png..."
+            oninput="updateClaimScreenshotPreview()"
+            onpaste="setTimeout(updateClaimScreenshotPreview, 50)"
         >
 
         <small style="display:block; color:#ffcc66; margin-top:-6px; margin-bottom:10px;">
-            System spróbuje automatycznie zrobić miniaturkę z popularnych linków.
+            System automatycznie poprawi popularne linki i pokaże podgląd przed zapisem.
         </small>
+
+        <div id="claimScreenshotPreviewBox" class="claim-preview-box">
+            <p class="claim-preview-title">Podgląd screenshota:</p>
+
+            <img
+                id="claimScreenshotPreviewImage"
+                class="claim-preview-image"
+                src=""
+                alt="Podgląd screenshota"
+                onclick="openScreenshotLightbox(this.src)"
+                onload="claimPreviewLoaded(this)"
+                onerror="claimPreviewError(this)"
+            >
+
+            <div
+                id="claimScreenshotPreviewStatus"
+                class="claim-preview-status"
+            >
+                Wklej link, aby sprawdzić miniaturkę.
+            </div>
+
+            <div
+                id="claimScreenshotNormalizedUrl"
+                class="claim-normalized-url"
+            ></div>
+        </div>
 
         <hr>
 
@@ -2395,7 +2746,7 @@ function openClaimTileModal(tile){
 async function claimTile(tileId){
     const screenshotInput = document.getElementById("claimScreenshotInput");
     const rawScreenshotUrl = screenshotInput ? screenshotInput.value.trim() : "";
-    const screenshotUrl = normalizeScreenshotUrl(rawScreenshotUrl);
+    const screenshotUrl = getWorkingScreenshotUrlFromPreview();
 
     if(!screenshotUrl){
         showToast("Musisz podać link do screenshota", "error");
@@ -2436,11 +2787,27 @@ async function claimTile(tileId){
 
 
 document.addEventListener("keydown", (event) => {
-    if(event.key === "Escape"){
-        const lightbox = document.getElementById("screenshotLightbox");
+    const lightbox = document.getElementById("screenshotLightbox");
+    const lightboxOpen = lightbox && lightbox.classList.contains("show");
 
-        if(lightbox && lightbox.classList.contains("show")){
-            closeScreenshotLightbox();
+    if(event.key === "Escape" && lightboxOpen){
+        closeScreenshotLightbox();
+    }
+
+    if(event.key === "ArrowLeft" && lightboxOpen){
+        showPreviousScreenshot();
+    }
+
+    if(event.key === "ArrowRight" && lightboxOpen){
+        showNextScreenshot();
+    }
+
+    if((event.key === "0" || event.key === "r") && lightboxOpen){
+        const image = document.getElementById("screenshotLightboxImage");
+        window.currentScreenshotZoom = 1;
+
+        if(image){
+            image.style.transform = "scale(1)";
         }
     }
 });
