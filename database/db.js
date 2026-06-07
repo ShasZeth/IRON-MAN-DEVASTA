@@ -128,6 +128,19 @@ async function initDatabase() {
         `);
 
         await pool.query(`
+            CREATE TABLE IF NOT EXISTS board_lock (
+                id INTEGER PRIMARY KEY,
+                locked_until TIMESTAMP
+            )
+        `);
+
+        await pool.query(`
+            INSERT INTO board_lock (id, locked_until)
+            VALUES (1, NULL)
+            ON CONFLICT (id) DO NOTHING
+        `);
+
+        await pool.query(`
             CREATE TABLE IF NOT EXISTS tile_history (
                 id SERIAL PRIMARY KEY,
                 tile_id INTEGER,

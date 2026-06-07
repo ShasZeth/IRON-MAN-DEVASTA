@@ -2762,6 +2762,7 @@ async function loadTiles(){
     updateStats(regularTiles);
     updateRanking(tiles);
     renderSpecialTiles(specialTiles);
+    scheduleBoardLockCountdownRefresh();
 
     const board = document.getElementById("board");
     board.innerHTML = "";
@@ -2769,6 +2770,33 @@ async function loadTiles(){
     regularTiles.forEach(tile => {
     const div = document.createElement("div");
     div.className = "tile";
+
+    const boardLocked = isBoardLocked() && !isAdmin();
+
+    if(boardLocked && !tile.taken){
+        div.classList.add("board-locked");
+
+        div.innerHTML = `
+            <div class="tile-title">
+                🔒 Ukryte zadanie
+            </div>
+
+            <small>
+                Zablokowany
+            </small>
+
+            <small class="tile-board-lock-time">
+                Odblokuje się za ${getBoardUnlockTimeLeft()}
+            </small>
+        `;
+
+        div.onclick = () => {
+            showToast(`Tablica odblokuje się za ${getBoardUnlockTimeLeft()}.`, "info");
+        };
+
+        board.appendChild(div);
+        return;
+    }
 
     if(tile.taken){
 
