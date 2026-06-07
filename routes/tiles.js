@@ -170,7 +170,11 @@ router.post("/board-lock", auth, (req, res) => {
             }
 
             broadcastBoardUpdate(req, "BOARD_LOCK_UPDATED", {
-                unlock_at: unlockAt
+                unlock_at: unlockAt,
+                notification: {
+                    type: "info",
+                    message: `🔒 Tablica została zablokowana na ${cleanMinutes} min.`
+                }
             });
 
             res.json({
@@ -204,7 +208,11 @@ router.post("/board-unlock", auth, (req, res) => {
             }
 
             broadcastBoardUpdate(req, "BOARD_LOCK_UPDATED", {
-                unlock_at: null
+                unlock_at: null,
+                notification: {
+                    type: "info",
+                    message: "🔓 Tablica została odblokowana."
+                }
             });
 
             res.json({
@@ -276,7 +284,11 @@ router.post("/unlock/:id", auth, (req, res) => {
             );
 
             broadcastBoardUpdate(req, "TILE_UPDATED", {
-                tileId: Number(tileId)
+                tileId: Number(tileId),
+                notification: {
+                    type: "info",
+                    message: `🔓 Administrator odblokował kafelek #${tileId}.`
+                }
             });
 
             res.json({
@@ -317,7 +329,11 @@ router.post("/rename-tile/:id", auth, (req, res) => {
             }
 
             broadcastBoardUpdate(req, "TILE_UPDATED", {
-                tileId: Number(tileId)
+                tileId: Number(tileId),
+                notification: {
+                    type: "info",
+                    message: `✏️ Administrator zmienił nazwę kafelka #${tileId}.`
+                }
             });
 
             res.json({
@@ -365,7 +381,11 @@ router.post("/points/:id", auth, (req, res) => {
             }
 
             broadcastBoardUpdate(req, "TILE_UPDATED", {
-                tileId: Number(tileId)
+                tileId: Number(tileId),
+                notification: {
+                    type: "info",
+                    message: `⭐ Administrator ustawił ${cleanPoints} pkt dla kafelka #${tileId}.`
+                }
             });
 
             res.json({
@@ -417,7 +437,11 @@ router.patch("/:id", auth, (req, res) => {
             }
 
             broadcastBoardUpdate(req, "TILE_UPDATED", {
-                tileId: Number(tileId)
+                tileId: Number(tileId),
+                notification: {
+                    type: "info",
+                    message: `💾 Administrator zapisał zmiany kafelka #${tileId}.`
+                }
             });
 
             res.json({
@@ -497,7 +521,11 @@ router.post("/users/bonus-points", auth, (req, res) => {
             }
 
             broadcastBoardUpdate(req, "BOARD_UPDATED", {
-                nickname
+                nickname,
+                notification: {
+                    type: "info",
+                    message: `⭐ Administrator zmienił punkty użytkownika ${nickname}.`
+                }
             });
 
             return res.json({
@@ -623,7 +651,13 @@ router.post("/create", auth, (req, res) => {
                                     }
 
                                     broadcastBoardUpdate(req, "BOARD_UPDATED", {
-                                        tileId: Number(nextId)
+                                        tileId: Number(nextId),
+                                        notification: {
+                                            type: "info",
+                                            message: specialFlag
+                                                ? `➕ Dodano nowy kafelek bonusowy #${nextSpecialNumber}.`
+                                                : `➕ Dodano nowy kafelek #${nextTileNumber}.`
+                                        }
                                     });
 
                                     res.json({
@@ -817,7 +851,11 @@ router.delete("/:id", auth, (req, res) => {
             }
 
             broadcastBoardUpdate(req, "BOARD_UPDATED", {
-                tileId: Number(tileId)
+                tileId: Number(tileId),
+                notification: {
+                    type: "info",
+                    message: `🗑 Administrator usunął kafelek #${tileId}.`
+                }
             });
 
             res.json({
@@ -924,7 +962,11 @@ router.post("/:id", auth, (req, res) => {
                     );
 
                     broadcastBoardUpdate(req, "TILE_UPDATED", {
-                        tileId: Number(tileId)
+                        tileId: Number(tileId),
+                        notification: {
+                            type: "success",
+                            message: `🎯 ${req.user.nickname || "Gracz"} zajął kafelek #${tile.tile_number || tile.special_number || tileId}.`
+                        }
                     });
 
                     res.json({

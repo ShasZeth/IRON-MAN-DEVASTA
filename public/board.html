@@ -3163,6 +3163,19 @@ document.addEventListener("keydown", (event) => {
 
 loadTiles();
 
+function showLiveNotificationFromSocket(data){
+    if(!data || !data.payload || !data.payload.notification){
+        return;
+    }
+
+    const notification = data.payload.notification;
+
+    showToast(
+        notification.message || "Plansza została zaktualizowana.",
+        notification.type || "info"
+    );
+}
+
 function connectBoardWebSocket(){
     const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const wsUrl = `${wsProtocol}//${window.location.host}`;
@@ -3187,6 +3200,7 @@ function connectBoardWebSocket(){
             data.type === "BOARD_UPDATED" ||
             data.type === "BOARD_LOCK_UPDATED"
         ){
+            showLiveNotificationFromSocket(data);
             await loadTiles();
         }
     };
