@@ -115,6 +115,19 @@ async function initDatabase() {
         `);
 
         await pool.query(`
+            CREATE TABLE IF NOT EXISTS app_settings (
+                key TEXT PRIMARY KEY,
+                value TEXT
+            )
+        `);
+
+        await pool.query(`
+            INSERT INTO app_settings (key, value)
+            VALUES ('board_locked_until', NULL)
+            ON CONFLICT (key) DO NOTHING
+        `);
+
+        await pool.query(`
             CREATE TABLE IF NOT EXISTS tile_history (
                 id SERIAL PRIMARY KEY,
                 tile_id INTEGER,

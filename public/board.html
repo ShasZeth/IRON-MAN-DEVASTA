@@ -370,7 +370,8 @@ body{
 }
 /* Przycisk dodawania kafelka */
 
-#createTileBtn{
+#createTileBtn,
+#lockBoardBtn{
     display:none;
     margin:8px auto 15px auto;
     padding:8px 16px;
@@ -387,9 +388,38 @@ body{
     box-shadow:0 0 8px rgba(0,0,0,.8);
 }
 
-#createTileBtn:hover{
+#createTileBtn:hover,
+#lockBoardBtn:hover{
     background:rgba(255,215,0,.15);
     box-shadow:0 0 12px rgba(255,215,0,.5);
+}
+
+
+.board-admin-buttons{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+#lockBoardBtn{
+    display:none;
+}
+
+.tile.board-locked{
+    background:linear-gradient(145deg, #303030, #666);
+    border-color:#999;
+    color:#e0e0e0;
+}
+
+.tile.board-locked:hover{
+    box-shadow:0 0 12px rgba(180,180,180,.65);
+}
+
+.tile.board-locked .tile-title,
+.tile.board-locked small{
+    color:#f1f1f1;
 }
 
 /* GŁÓWNA ZAWARTOŚĆ */
@@ -1020,11 +1050,19 @@ body{
 
             <p id="progressText">Zapełnienie: 0%</p>
 
-            <button
-                id="createTileBtn"
-                onclick="adminCreateTile()">
-                ➕ Dodaj kafelek
-            </button>
+            <div class="board-admin-buttons">
+                <button
+                    id="createTileBtn"
+                    onclick="adminCreateTile()">
+                    ➕ Dodaj kafelek
+                </button>
+
+                <button
+                    id="lockBoardBtn"
+                    onclick="adminOpenBoardLockModal()">
+                    🔒 Zablokuj tablicę
+                </button>
+            </div>
         </div>
 
         <div id="board"></div>
@@ -1581,6 +1619,172 @@ function getUnlockTimeLeft(tile){
     const seconds = totalSeconds % 60;
 
     return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+
+function isBoardLocked(){
+    return window.currentBoardLock &&
+        window.currentBoardLock.unlock_at &&
+        new Date(window.currentBoardLock.unlock_at).getTime() > Date.now();
+}
+
+function getBoardUnlockTimeLeft(){
+    if(!window.currentBoardLock || !window.currentBoardLock.unlock_at){
+        return "";
+    }
+
+    const diff = new Date(window.currentBoardLock.unlock_at).getTime() - Date.now();
+
+    if(diff <= 0){
+        return "00:00";
+    }
+
+    const totalSeconds = Math.ceil(diff / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+
+    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function isRegularTileBoardLocked(tile){
+    return !isSpecialTile(tile) &&
+        (tile.is_board_locked === 1 || tile.is_board_locked === true || isBoardLocked());
+}
+
+function scheduleBoardLockCountdownRefresh(){
+    if(window.boardLockCountdownTimer){
+        clearInterval(window.boardLockCountdownTimer);
+    }
+
+    if(!isBoardLocked()){
+        return;
+    }
+
+    window.boardLockCountdownTimer = setInterval(async () => {
+        if(!isBoardLocked()){
+            clearInterval(window.boardLockCountdownTimer);
+            window.boardLockCountdownTimer = null;
+            await loadTiles();
+            return;
+        }
+
+        const lockedLabels = document.querySelectorAll(".board-lock-countdown");
+        lockedLabels.forEach(label => {
+            label.innerText = `Odblokuje się za ${getBoardUnlockTimeLeft()}`;
+        });
+    }, 1000);
+}
+
+function adminOpenBoardLockModal(){
+    if(!isAdmin()){
+        showToast("Brak uprawnień administratora.", "error");
+        return;
+    }
+
+    const html = `
+        <h2>🔒 Zablokuj tablicę</h2>
+
+        <p>
+            Po zablokowaniu zwykli użytkownicy zobaczą na wszystkich kafelkach tablicy
+            komunikat <b>Ukryte zadanie</b> oraz odliczanie czasu.
+        </p>
+
+        <label class="tile-form-label" for="boardLockMinutesInput">
+            Odblokuj tablicę za ile minut?
+        </label>
+
+        <input
+            id="boardLockMinutesInput"
+            class="tile-form-input"
+            type="number"
+            min="1"
+            step="1"
+            value="60"
+        >
+
+        <hr>
+
+        <button
+            class="modal-btn modal-save"
+            onclick="adminLockBoard()"
+        >
+            🔒 Zablokuj tablicę
+        </button>
+
+        <button
+            class="modal-btn modal-unlock"
+            onclick="adminUnlockBoard()"
+        >
+            🔓 Odblokuj tablicę teraz
+        </button>
+    `;
+
+    document.getElementById("tileDetails").innerHTML = html;
+    document.getElementById("tileModal").style.display = "block";
+
+    setTimeout(() => {
+        const input = document.getElementById("boardLockMinutesInput");
+        if(input){
+            input.focus();
+            input.select();
+        }
+    }, 50);
+}
+
+async function adminLockBoard(){
+    const input = document.getElementById("boardLockMinutesInput");
+    const lockMinutes = Number(input ? input.value : 0);
+
+    if(!Number.isInteger(lockMinutes) || lockMinutes < 1){
+        showToast("Czas blokady musi być liczbą minut większą od 0.", "error");
+        return;
+    }
+
+    const token = localStorage.getItem("token");
+
+    const response = await fetch("/api/tiles/board-lock", {
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json",
+            Authorization:`Bearer ${token}`
+        },
+        body:JSON.stringify({
+            lockMinutes:lockMinutes
+        })
+    });
+
+    const data = await response.json();
+
+    if(!response.ok){
+        showToast(data.message || "Błąd blokowania tablicy.", "error");
+        return;
+    }
+
+    showToast(data.message || "Tablica została zablokowana.", "success");
+    closeTileModal();
+    await loadTiles();
+}
+
+async function adminUnlockBoard(){
+    const token = localStorage.getItem("token");
+
+    const response = await fetch("/api/tiles/board-unlock", {
+        method:"POST",
+        headers:{
+            Authorization:`Bearer ${token}`
+        }
+    });
+
+    const data = await response.json();
+
+    if(!response.ok){
+        showToast(data.message || "Błąd odblokowania tablicy.", "error");
+        return;
+    }
+
+    showToast(data.message || "Tablica została odblokowana.", "success");
+    closeTileModal();
+    await loadTiles();
 }
 
 function scheduleBonusCountdownRefresh(){
@@ -2209,7 +2413,22 @@ function renderSpecialTiles(specialTiles){
             return;
         }
 
-            if(tile.taken){
+            const regularLocked = isRegularTileBoardLocked(tile);
+
+    if(regularLocked){
+        div.classList.add("board-locked");
+
+        div.innerHTML = `
+            <div class="tile-title">
+                🔒 Ukryte zadanie
+            </div>
+
+            <small class="board-lock-countdown">
+                Odblokuje się za ${getBoardUnlockTimeLeft()}
+            </small>
+        `;
+
+    }else if(tile.taken){
             openTileModal(tile);
             return;
         }
@@ -2285,9 +2504,9 @@ function updateRanking(tiles){
         }
 
         if(isSpecialTile(tile)){
-            ranking[tile.nickname].bountyPoints += Number(tile.points || 0);
+            ranking[tile.nickname].bountyPoints += Number(tile.rank_points ?? tile.points ?? 0);
         }else{
-            ranking[tile.nickname].points += Number(tile.points || 0);
+            ranking[tile.nickname].points += Number(tile.rank_points ?? tile.points ?? 0);
         }
 
         ranking[tile.nickname].tiles.push({
@@ -2296,7 +2515,7 @@ function updateRanking(tiles){
                 ? (tile.special_number || tile.id)
                 : (tile.tile_number || tile.id),
             tileName: tile.tile_name || "",
-            points: Number(tile.points || 0),
+            points: Number(tile.rank_points ?? tile.points ?? 0),
             isSpecial: isSpecialTile(tile)
         });
     }
@@ -2534,6 +2753,9 @@ async function loadTiles(){
     });
     const tiles = await response.json();
 
+    const boardLockResponse = await fetch("/api/tiles/board-lock/status");
+    window.currentBoardLock = await boardLockResponse.json();
+
     const regularTiles = tiles.filter(tile => !isSpecialTile(tile));
     const specialTiles = tiles.filter(tile => isSpecialTile(tile));
 
@@ -2632,6 +2854,11 @@ async function loadTiles(){
                 return;
             }
 
+            if(isRegularTileBoardLocked(tile) && !isAdmin()){
+                showToast(`Tablica odblokuje się za ${getBoardUnlockTimeLeft()}.`, "info");
+                return;
+            }
+
             if(tile.taken){
                 openTileModal(tile);
                 return;
@@ -2643,6 +2870,8 @@ async function loadTiles(){
 
          board.appendChild(div);
     });
+
+    scheduleBoardLockCountdownRefresh();
 
 }
 
@@ -2661,6 +2890,7 @@ window.onclick = function(event){
 
 if(isAdmin()){
     document.getElementById("createTileBtn").style.display = "block";
+    document.getElementById("lockBoardBtn").style.display = "block";
 }
 
 function openClaimTileModal(tile){
