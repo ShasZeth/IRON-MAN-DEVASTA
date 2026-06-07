@@ -875,6 +875,15 @@ router.post("/:id", auth, (req, res) => {
                         () => {}
                     );
 
+                    const broadcast = req.app.get("broadcast");
+
+                    if(broadcast){
+                        broadcast({
+                            type: "TILE_UPDATED",
+                            tileId: Number(tileId)
+                        });
+                    }
+
                     res.json({
                         success: true,
                         message: "Kafelek został zajęty"

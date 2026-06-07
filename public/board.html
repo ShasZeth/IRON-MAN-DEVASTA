@@ -3163,38 +3163,45 @@ document.addEventListener("keydown", (event) => {
 
 loadTiles();
 
-setInterval(() => {
-    if(document.hidden){
-        return;
-    }
+function connectBoardWebSocket(){
+    const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const wsUrl = `${wsProtocol}//${window.location.host}`;
 
-    const active = document.activeElement;
+    const ws = new WebSocket(wsUrl);
 
-    const isTyping =
-        active &&
-        (
-            active.tagName === "INPUT" ||
-            active.tagName === "TEXTAREA" ||
-            active.tagName === "SELECT"
-        );
+    ws.onopen = () => {
+        console.log("WebSocket połączony");
+    };
 
-    const rulesModal = document.getElementById("rulesModal");
-    const screenshotLightbox = document.getElementById("screenshotLightbox");
+    ws.onmessage = async (event) => {
+        let data;
 
-    const rulesOpen =
-        rulesModal &&
-        rulesModal.style.display === "block";
+        try{
+            data = JSON.parse(event.data);
+        }catch(error){
+            return;
+        }
 
-    const lightboxOpen =
-        screenshotLightbox &&
-        screenshotLightbox.classList.contains("show");
+        if(
+            data.type === "TILE_UPDATED" ||
+            data.type === "BOARD_UPDATED" ||
+            data.type === "BOARD_LOCK_UPDATED"
+        ){
+            await loadTiles();
+        }
+    };
 
-    if(isTyping || rulesOpen || lightboxOpen){
-        return;
-    }
+    ws.onclose = () => {
+        console.log("WebSocket rozłączony — ponawiam połączenie");
+        setTimeout(connectBoardWebSocket, 3000);
+    };
 
-    loadTiles();
-}, 2000);
+    ws.onerror = () => {
+        ws.close();
+    };
+}
+
+connectBoardWebSocket();
 
 </script>
 
