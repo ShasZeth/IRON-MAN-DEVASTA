@@ -2753,10 +2753,18 @@ async function saveUserBonus(nickname){
 
 
 async function loadTiles(){
+    if(window.isLoadingTiles){
+        return;
+    }
+
+    window.isLoadingTiles = true;
+
+    try{
     const token = localStorage.getItem("token");
     const tilesUrl = isAdmin() ? "/api/tiles/admin/all" : "/api/tiles";
 
-    const response = await fetch(tilesUrl, {
+    const response = await fetch(`${tilesUrl}?t=${Date.now()}`, {
+        cache:"no-store",
         headers: token
             ? { Authorization:`Bearer ${token}` }
             : {}
@@ -2950,6 +2958,9 @@ async function loadTiles(){
 
     scheduleBoardLockCountdownRefresh();
 
+    }finally{
+        window.isLoadingTiles = false;
+    }
 }
 
 window.onclick = function(event){
@@ -3137,6 +3148,36 @@ setInterval(() => {
 
     if(!modalOpen){
         loadTiles();
+
+setInterval(() => {
+    if(document.hidden){
+        return;
+    }
+
+    const rulesModal = document.getElementById("rulesModal");
+    const screenshotLightbox = document.getElementById("screenshotLightbox");
+    const claimInput = document.getElementById("claimScreenshotInput");
+    const adminRenameInput = document.getElementById("adminRenameInput");
+    const adminTilePointsInput = document.getElementById("adminTilePointsInput");
+    const boardLockMinutesInput = document.getElementById("boardLockMinutesInput");
+    const newTileNameInput = document.getElementById("newTileNameInput");
+
+    const userIsTyping =
+        claimInput ||
+        adminRenameInput ||
+        adminTilePointsInput ||
+        boardLockMinutesInput ||
+        newTileNameInput;
+
+    const blockedByOverlay =
+        (rulesModal && rulesModal.style.display === "block") ||
+        (screenshotLightbox && screenshotLightbox.classList.contains("show"));
+
+    if(!userIsTyping && !blockedByOverlay){
+        loadTiles();
+    }
+}, 2000);
+
     }
 }, 2000);
 </script>
