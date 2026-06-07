@@ -39,6 +39,18 @@ function isRegularTile(tile){
     return !(tile.is_special === 1 || tile.is_special === true);
 }
 
+function getTileLabel(tile){
+    if(!tile){
+        return "kafelek";
+    }
+
+    if(tile.is_special === 1 || tile.is_special === true){
+        return `Bonus #${tile.special_number || tile.id}`;
+    }
+
+    return `kafelek #${tile.tile_number || tile.id}`;
+}
+
 function getOptionalUserFromToken(req){
     const authHeader = req.headers.authorization || "";
 
@@ -259,42 +271,61 @@ router.post("/unlock/:id", auth, (req, res) => {
 
     const tileId = req.params.id;
 
-    db.run(
+    db.get(
         `
-        UPDATE tiles
-        SET taken = 0,
-            takenby = NULL,
-            takenat = NULL,
-            screenshot_url = NULL
+        SELECT *
+        FROM tiles
         WHERE id = ?
         `,
         [tileId],
-        function(err) {
-            if (err) {
-                return res.status(500).json({ success: false });
+        (tileErr, tile) => {
+            if(tileErr || !tile){
+                return res.status(404).json({
+                    success:false,
+                    message:"Kafelek nie istnieje"
+                });
             }
+
+            const tileLabel = getTileLabel(tile);
 
             db.run(
                 `
-                INSERT INTO tile_history (tile_id, user_id, action, note)
-                VALUES (?, ?, 'UNLOCK_TILE', 'Administrator odblokował kafelek')
+                UPDATE tiles
+                SET taken = 0,
+                    takenby = NULL,
+                    takenat = NULL,
+                    screenshot_url = NULL
+                WHERE id = ?
                 `,
-                [tileId, req.user.id],
-                () => {}
-            );
+                [tileId],
+                function(err) {
+                    if (err) {
+                        return res.status(500).json({ success: false });
+                    }
 
-            broadcastBoardUpdate(req, "TILE_UPDATED", {
-                tileId: Number(tileId),
-                notification: {
-                    type: "info",
-                    message: `🔓 Administrator odblokował kafelek #${tileId}.`
+                    db.run(
+                        `
+                        INSERT INTO tile_history (tile_id, user_id, action, note)
+                        VALUES (?, ?, 'UNLOCK_TILE', 'Administrator odblokował kafelek')
+                        `,
+                        [tileId, req.user.id],
+                        () => {}
+                    );
+
+                    broadcastBoardUpdate(req, "TILE_UPDATED", {
+                        tileId: Number(tileId),
+                        notification: {
+                            type: "info",
+                            message: `🔓 Administrator odblokował ${tileLabel}.`
+                        }
+                    });
+
+                    res.json({
+                        success: true,
+                        message: "Kafelek odblokowany"
+                    });
                 }
-            });
-
-            res.json({
-                success: true,
-                message: "Kafelek odblokowany"
-            });
+            );
         }
     );
 });
@@ -310,39 +341,58 @@ router.post("/rename-tile/:id", auth, (req, res) => {
     const tileId = req.params.id;
     const { tileName } = req.body;
 
-    db.run(
+    db.get(
         `
-        UPDATE tiles
-        SET tile_name = ?
+        SELECT *
+        FROM tiles
         WHERE id = ?
         `,
-        [
-            tileName?.trim() || null,
-            tileId
-        ],
-        function(err){
-            if(err){
-                return res.status(500).json({
+        [tileId],
+        (tileErr, tile) => {
+            if(tileErr || !tile){
+                return res.status(404).json({
                     success:false,
-                    message:"Nie udało się zmienić nazwy"
+                    message:"Kafelek nie istnieje"
                 });
             }
 
-            broadcastBoardUpdate(req, "TILE_UPDATED", {
-                tileId: Number(tileId),
-                notification: {
-                    type: "info",
-                    message: `✏️ Administrator zmienił nazwę kafelka #${tileId}.`
-                }
-            });
+            const tileLabel = getTileLabel(tile);
 
-            res.json({
-                success:true,
-                message:"Nazwa kafelka została zmieniona"
-            });
+            db.run(
+                `
+                UPDATE tiles
+                SET tile_name = ?
+                WHERE id = ?
+                `,
+                [
+                    tileName?.trim() || null,
+                    tileId
+                ],
+                function(err){
+                    if(err){
+                        return res.status(500).json({
+                            success:false,
+                            message:"Nie udało się zmienić nazwy"
+                        });
+                    }
+
+                    broadcastBoardUpdate(req, "TILE_UPDATED", {
+                        tileId: Number(tileId),
+                        notification: {
+                            type: "info",
+                            message: `✏️ Administrator zmienił nazwę ${tileLabel}.`
+                        }
+                    });
+
+                    res.json({
+                        success:true,
+                        message:"Nazwa kafelka została zmieniona"
+                    });
+                }
+            );
         }
     );
-})
+});
 
 router.post("/points/:id", auth, (req, res) => {
 
@@ -365,33 +415,52 @@ router.post("/points/:id", auth, (req, res) => {
         });
     }
 
-    db.run(
+    db.get(
         `
-        UPDATE tiles
-        SET points = ?
+        SELECT *
+        FROM tiles
         WHERE id = ?
         `,
-        [cleanPoints, tileId],
-        function(err){
-            if(err){
-                return res.status(500).json({
+        [tileId],
+        (tileErr, tile) => {
+            if(tileErr || !tile){
+                return res.status(404).json({
                     success:false,
-                    message:"Nie udało się zmienić punktów"
+                    message:"Kafelek nie istnieje"
                 });
             }
 
-            broadcastBoardUpdate(req, "TILE_UPDATED", {
-                tileId: Number(tileId),
-                notification: {
-                    type: "info",
-                    message: `⭐ Administrator ustawił ${cleanPoints} pkt dla kafelka #${tileId}.`
-                }
-            });
+            const tileLabel = getTileLabel(tile);
 
-            res.json({
-                success:true,
-                message:"Punkty kafelka zostały zmienione"
-            });
+            db.run(
+                `
+                UPDATE tiles
+                SET points = ?
+                WHERE id = ?
+                `,
+                [cleanPoints, tileId],
+                function(err){
+                    if(err){
+                        return res.status(500).json({
+                            success:false,
+                            message:"Nie udało się zmienić punktów"
+                        });
+                    }
+
+                    broadcastBoardUpdate(req, "TILE_UPDATED", {
+                        tileId: Number(tileId),
+                        notification: {
+                            type: "info",
+                            message: `⭐ Administrator ustawił ${cleanPoints} pkt dla ${tileLabel}.`
+                        }
+                    });
+
+                    res.json({
+                        success:true,
+                        message:"Punkty kafelka zostały zmienione"
+                    });
+                }
+            );
         }
     );
 });
