@@ -835,33 +835,56 @@ router.delete("/:id", auth, (req, res) => {
 
     const tileId = req.params.id;
 
-    db.run(
+    db.get(
         `
-        DELETE FROM tiles
+        SELECT *
+        FROM tiles
         WHERE id = ?
         `,
         [tileId],
-        function(err){
+        (err, tile) => {
 
-            if(err){
-                return res.status(500).json({
+            if(err || !tile){
+                return res.status(404).json({
                     success:false,
-                    message:"Nie udało się usunąć kafelka"
+                    message:"Kafelek nie istnieje"
                 });
             }
 
-            broadcastBoardUpdate(req, "BOARD_UPDATED", {
-                tileId: Number(tileId),
-                notification: {
-                    type: "info",
-                    message: `🗑 Administrator usunął kafelek #${tileId}.`
-                }
-            });
+            const tileLabel =
+                tile.is_special
+                    ? `Bonus #${tile.special_number}`
+                    : `#${tile.tile_number}`;
 
-            res.json({
-                success:true,
-                message:"Kafelek został usunięty"
-            });
+            db.run(
+                `
+                DELETE FROM tiles
+                WHERE id = ?
+                `,
+                [tileId],
+                function(err){
+
+                    if(err){
+                        return res.status(500).json({
+                            success:false,
+                            message:"Nie udało się usunąć kafelka"
+                        });
+                    }
+
+                    broadcastBoardUpdate(req, "BOARD_UPDATED", {
+                        tileId: Number(tileId),
+                        notification: {
+                            type: "info",
+                            message: `🗑 Administrator usunął ${tileLabel}.`
+                        }
+                    });
+
+                    res.json({
+                        success:true,
+                        message:"Kafelek został usunięty"
+                    });
+                }
+            );
         }
     );
 });
