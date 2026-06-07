@@ -1143,6 +1143,35 @@ body{
 </div>
 
 <script>
+(function protectBoardPage(){
+    const token = localStorage.getItem("token");
+
+    if(!token){
+        window.location.href = "/";
+        return;
+    }
+
+    try{
+        const payload = JSON.parse(atob(token.split(".")[1]));
+
+        if(!payload || !payload.id){
+            localStorage.removeItem("token");
+            window.location.href = "/";
+            return;
+        }
+
+        if(payload.exp && Date.now() >= payload.exp * 1000){
+            localStorage.removeItem("token");
+            window.location.href = "/";
+            return;
+        }
+    }catch(error){
+        localStorage.removeItem("token");
+        window.location.href = "/";
+        return;
+    }
+})();
+
 function logout(){
     localStorage.removeItem("token");
     window.location.href = "/";

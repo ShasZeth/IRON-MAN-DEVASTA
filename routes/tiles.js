@@ -679,8 +679,10 @@ router.get("/ranking/points", (req, res) => {
     );
 });
 
-router.get("/", (req, res) => {
-    const requestIsAdmin = isRequestAdmin(req);
+// Wymaga logowania.
+// Dzięki temu niezalogowana osoba nie pobierze tablicy przez /api/tiles.
+router.get("/", auth, (req, res) => {
+    const requestIsAdmin = !!req.user.isAdmin;
 
     getBoardLockStatus((lockErr, boardLock) => {
         if(lockErr){
@@ -854,6 +856,13 @@ router.post("/:id", auth, (req, res) => {
                         return res.status(500).json({
                             success: false,
                             message: "Błąd zapisu kafelka"
+                        });
+                    }
+
+                    if(this.changes === 0){
+                        return res.status(409).json({
+                            success:false,
+                            message:"Kafelek został już zajęty przez innego użytkownika"
                         });
                     }
 
