@@ -105,57 +105,85 @@ button{
 
 <script>
 async function register(){
-
     const nickname =
-        document.getElementById("registerNickname").value;
+        document.getElementById("registerNickname").value.trim();
 
     const password =
         document.getElementById("registerPassword").value;
 
-    const response = await fetch("/api/register", {
-        method:"POST",
-        headers:{
-            "Content-Type":"application/json"
-        },
-        body:JSON.stringify({
-            nickname,
-            password
-        })
-    });
+    const registerResult = document.getElementById("registerResult");
 
-    const data = await response.json();
+    registerResult.innerText = "";
 
-    document.getElementById("registerResult").innerText =
-        data.message || "Konto utworzone!";
+    if(!nickname || !password){
+        registerResult.innerText = "Podaj nickname i hasło.";
+        return;
+    }
+
+    try{
+        const response = await fetch("/api/register", {
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({
+                nickname,
+                password
+            })
+        });
+
+        const data = await response.json();
+
+        registerResult.innerText =
+            data.message || "Konto utworzone! Możesz się zalogować.";
+
+    }catch(error){
+        registerResult.innerText =
+            "Nie można połączyć się z serwerem.";
+    }
 }
 
 async function login(){
-
     const nickname =
-        document.getElementById("loginNickname").value;
+        document.getElementById("loginNickname").value.trim();
 
     const password =
         document.getElementById("loginPassword").value;
 
-    const response = await fetch("/api/login", {
-        method:"POST",
-        headers:{
-            "Content-Type":"application/json"
-        },
-        body:JSON.stringify({
-            nickname,
-            password
-        })
-    });
+    const loginResult = document.getElementById("loginResult");
 
-    const data = await response.json();
+    loginResult.innerText = "";
 
-    if(data.success){
-        localStorage.setItem("token", data.token);
-        window.location.href = "/";
-    }else{
-        document.getElementById("loginResult").innerText =
-            data.message;
+    if(!nickname || !password){
+        loginResult.innerText = "Podaj nickname i hasło.";
+        return;
+    }
+
+    try{
+        const response = await fetch("/api/login", {
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({
+                nickname,
+                password
+            })
+        });
+
+        const data = await response.json();
+
+        if(data.success){
+            localStorage.setItem("token", data.token);
+            window.location.href = "/board.html";
+        }else{
+            loginResult.innerText =
+                data.message || "Nieprawidłowy login lub hasło.";
+        }
+
+    }catch(error){
+        loginResult.innerText =
+            "Nie można połączyć się z serwerem.";
     }
 }
 </script>

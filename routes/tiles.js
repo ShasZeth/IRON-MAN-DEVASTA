@@ -39,6 +39,76 @@ function isRegularTile(tile){
     return !(tile.is_special === 1 || tile.is_special === true);
 }
 
+function getOptionalUserFromToken(req){
+    const authHeader = req.headers.authorization || "";
+
+    if(!authHeader.startsWith("Bearer ")){
+        return null;
+    }
+
+    const token = authHeader.split(" ")[1];
+
+    if(!token){
+        return null;
+    }
+
+    try{
+        const jwt = require("jsonwebtoken");
+        return jwt.verify(token, process.env.JWT_SECRET);
+    }catch(error){
+        return null;
+    }
+}
+
+function isRequestAdmin(req){
+    const user = getOptionalUserFromToken(req);
+    return !!(user && user.isAdmin);
+}
+
+function getPublicTile(tile, boardLock){
+    return {
+        id: tile.id,
+        tile_number: tile.tile_number,
+        taken: tile.taken,
+        takenby: tile.takenby,
+        takenat: tile.takenat,
+        screenshot_url: tile.screenshot_url,
+        points: tile.points,
+        is_special: tile.is_special,
+        special_number: tile.special_number,
+        unlock_at: tile.unlock_at,
+        tile_name: tile.tile_name,
+        nickname: tile.nickname,
+        bonus_points: tile.bonus_points,
+        admin_bonus_points: tile.admin_bonus_points,
+        admin_penalty_points: tile.admin_penalty_points,
+        board_lock: boardLock.locked ? boardLock : null
+    };
+}
+
+function getHiddenSpecialTile(tile, boardLock){
+    return {
+        id: tile.id,
+        is_special: 1,
+        special_number: tile.special_number,
+        taken: 0,
+        unlock_at: tile.unlock_at,
+        is_locked: 1,
+        board_lock: boardLock.locked ? boardLock : null
+    };
+}
+
+function getHiddenBoardTile(tile, boardLock){
+    return {
+        id: tile.id,
+        tile_number: tile.tile_number,
+        is_special: 0,
+        taken: 0,
+        is_board_locked: 1,
+        board_lock: boardLock
+    };
+}
+
 
 
 router.get("/board-lock/status", (req, res) => {
@@ -322,7 +392,13 @@ router.patch("/:id", auth, (req, res) => {
     );
 });
 
-router.post("/users/bonus-points", (req, res) => {
+router.post("/users/bonus-points", auth, (req, res) => {
+    if(!req.user.isAdmin){
+        return res.status(403).json({
+            message:"Brak uprawnień administratora."
+        });
+    }
+
     const { nickname, adminBonusPoints, adminPenaltyPoints, bonusPoints } = req.body;
 
     if(!nickname){
@@ -604,6 +680,8 @@ router.get("/ranking/points", (req, res) => {
 });
 
 router.get("/", (req, res) => {
+    const requestIsAdmin = isRequestAdmin(req);
+
     getBoardLockStatus((lockErr, boardLock) => {
         if(lockErr){
             console.error("LOAD BOARD LOCK ERROR:", lockErr);
@@ -643,40 +721,22 @@ router.get("/", (req, res) => {
                         tile.unlock_at &&
                         new Date(tile.unlock_at).getTime() > now;
 
-                    const baseTile = {
-                        ...tile,
-                        board_lock: boardLock.locked ? boardLock : null
-                    };
+                    /*
+                        SECURITY:
+                        - Admin can see everything through /admin/all.
+                        - Public /api/tiles must never leak hidden task data.
+                        - Normal users receive only minimal placeholders for locked tasks.
+                    */
 
-                    if(isSpecialLocked){
-                        return {
-                            ...baseTile,
-                            tile_name:null,
-                            points:0,
-                            screenshot_url:null,
-                            nickname:null,
-                            taken:0,
-                            takenby:null,
-                            takenat:null,
-                            is_locked:1
-                        };
+                    if(!requestIsAdmin && isSpecialLocked){
+                        return getHiddenSpecialTile(tile, boardLock);
                     }
 
-                    if(boardLock.locked && !isSpecial && !tile.taken){
-                        return {
-                            ...baseTile,
-                            tile_name:null,
-                            points:0,
-                            screenshot_url:null,
-                            nickname:null,
-                            taken:0,
-                            takenby:null,
-                            takenat:null,
-                            is_board_locked:1
-                        };
+                    if(!requestIsAdmin && boardLock.locked && !isSpecial && !tile.taken){
+                        return getHiddenBoardTile(tile, boardLock);
                     }
 
-                    return baseTile;
+                    return getPublicTile(tile, boardLock);
                 });
 
                 res.json(safeRows);
@@ -782,6 +842,7 @@ router.post("/:id", auth, (req, res) => {
                     takenat = NOW(),
                     screenshot_url = ?
                 WHERE id = ?
+                AND taken = 0
                 `,
                 [
                     req.user.id,

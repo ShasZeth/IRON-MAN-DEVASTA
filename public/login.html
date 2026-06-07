@@ -3,56 +3,115 @@
 <head>
 <meta charset="UTF-8">
 <title>Logowanie</title>
+
+<style>
+body{
+    margin:0;
+    min-height:100vh;
+    font-family:Arial, sans-serif;
+    background:#111;
+    color:white;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.container{
+    width:360px;
+    background:#222;
+    padding:25px;
+    border-radius:12px;
+    box-shadow:0 0 20px rgba(0,0,0,.5);
+}
+
+h1{
+    text-align:center;
+}
+
+input{
+    width:100%;
+    padding:12px;
+    margin:8px 0;
+    box-sizing:border-box;
+    border:none;
+    border-radius:6px;
+}
+
+button{
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+    font-weight:bold;
+    background:#007bff;
+    color:white;
+}
+
+#result{
+    text-align:center;
+    margin-top:10px;
+}
+</style>
 </head>
+
 <body>
 
-<h1>Logowanie</h1>
+<div class="container">
+    <h1>Logowanie</h1>
 
-<input id="nickname" placeholder="Nickname">
-<br><br>
+    <input id="nickname" placeholder="Nickname">
+    <input id="password" type="password" placeholder="Hasło">
 
-<input id="password" type="password" placeholder="Hasło">
-<br><br>
+    <button onclick="login()">Zaloguj</button>
 
-<button onclick="login()">Zaloguj</button>
-
-<p id="result"></p>
+    <p id="result"></p>
+</div>
 
 <script>
-async function login() {
-
+async function login(){
     const nickname =
-        document.getElementById("nickname").value;
+        document.getElementById("nickname").value.trim();
 
     const password =
         document.getElementById("password").value;
 
-    const response = await fetch("/api/login", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            nickname,
-            password
-        })
-    });
+    const result = document.getElementById("result");
 
-    const data = await response.json();
+    result.innerText = "";
 
-    if(data.success){
+    if(!nickname || !password){
+        result.innerText = "Podaj nickname i hasło.";
+        return;
+    }
 
-        localStorage.setItem(
-            "token",
-            data.token
-        );
+    try{
+        const response = await fetch("/api/login", {
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({
+                nickname,
+                password
+            })
+        });
 
-        window.location.href = "/";
-    } else {
+        const data = await response.json();
 
-        document.getElementById("result")
-            .innerText = data.message;
+        if(data.success){
+            localStorage.setItem("token", data.token);
+            window.location.href = "/board.html";
+        }else{
+            result.innerText =
+                data.message || "Nieprawidłowy login lub hasło.";
+        }
 
+    }catch(error){
+        result.innerText =
+            "Nie można połączyć się z serwerem.";
     }
 }
 </script>

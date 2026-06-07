@@ -1,5 +1,4 @@
 const express = require("express");
-const bcrypt = require("bcrypt");
 const db = require("../database/db");
 const auth = require("../middleware/auth");
 
@@ -18,42 +17,6 @@ function requireAdmin(req, res, next) {
 
 router.get("/test", (req, res) => {
     res.send("ADMIN ROUTE WORKS");
-});
-
-router.post("/make-admin", (req, res) => {
-    const { nickname, secret } = req.body;
-
-    if (secret !== process.env.ADMIN_SECRET) {
-        return res.status(403).json({
-            success: false,
-            message: "Nieprawidłowy sekret"
-        });
-    }
-
-    db.run(
-        "UPDATE users SET isadmin = 1 WHERE nickname = ?",
-        [nickname],
-        function(err) {
-            if (err) {
-                return res.status(500).json({
-                    success: false,
-                    message: "Błąd bazy"
-                });
-            }
-
-            if (this.changes === 0) {
-                return res.status(404).json({
-                    success: false,
-                    message: "Nie znaleziono użytkownika"
-                });
-            }
-
-            res.json({
-                success: true,
-                message: `Użytkownik ${nickname} został administratorem`
-            });
-        }
-    );
 });
 
 router.get("/users", auth, requireAdmin, (req, res) => {
@@ -141,7 +104,8 @@ router.delete("/users/:id", auth, requireAdmin, (req, res) => {
         UPDATE tiles
         SET taken = 0,
             takenby = NULL,
-            takenat = NULL
+            takenat = NULL,
+            screenshot_url = NULL
         WHERE takenby = ?
         `,
         [req.params.id],
@@ -180,7 +144,8 @@ router.post("/reset-board", auth, requireAdmin, (req, res) => {
         UPDATE tiles
         SET taken = 0,
             takenby = NULL,
-            takenat = NULL
+            takenat = NULL,
+            screenshot_url = NULL
         `,
         [],
         function(err) {
@@ -263,7 +228,8 @@ router.post("/tiles/:id/reset", auth, requireAdmin, (req, res) => {
         UPDATE tiles
         SET taken = 0,
             takenby = NULL,
-            takenat = NULL
+            takenat = NULL,
+            screenshot_url = NULL
         WHERE id = ?
         `,
         [req.params.id],
@@ -318,7 +284,8 @@ router.post("/tiles/:id/assign", auth, requireAdmin, (req, res) => {
                 UPDATE tiles
                 SET taken = 1,
                     takenby = ?,
-                    takenat = NOW()
+                    takenat = NOW(),
+                    screenshot_url = NULL
                 WHERE id = ?
                 `,
                 [user.id, req.params.id],

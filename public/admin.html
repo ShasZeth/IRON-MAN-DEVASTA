@@ -5,7 +5,6 @@
 <title>Panel Administratora</title>
 
 <style>
-
 body{
     font-family:Arial;
     max-width:900px;
@@ -20,12 +19,17 @@ body{
     display:flex;
     justify-content:space-between;
     align-items:center;
+    gap:12px;
 }
 
 button{
     cursor:pointer;
 }
 
+.message{
+    margin:10px 0 15px 0;
+    font-weight:bold;
+}
 </style>
 
 </head>
@@ -33,83 +37,117 @@ button{
 
 <h1>Panel Administratora</h1>
 
+<p id="message" class="message"></p>
 <div id="tiles"></div>
 
 <script>
+function getToken(){
+    return localStorage.getItem("token");
+}
+
+function showMessage(message){
+    document.getElementById("message").innerText = message || "";
+}
+
+function escapeText(value){
+    return String(value ?? "");
+}
 
 async function loadTiles(){
+    const token = getToken();
 
-    const token =
-        localStorage.getItem("token");
+    if(!token){
+        showMessage("Brak tokenu. Zaloguj się ponownie.");
+        window.location.href = "/";
+        return;
+    }
 
-    const response =
-        await fetch("/api/tiles/taken/list", {
+    try{
+        const response = await fetch(`/api/tiles/taken/list?_=${Date.now()}`, {
+            cache:"no-store",
             headers:{
-                Authorization:
-                    `Bearer ${token}`
+                Authorization:`Bearer ${token}`
             }
         });
 
-    const data =
-        await response.json();
+        const data = await response.json();
 
-    const container =
-        document.getElementById("tiles");
+        if(!response.ok){
+            showMessage(data.message || "Brak dostępu do panelu administratora.");
+            return;
+        }
 
-    container.innerHTML = "";
+        const container = document.getElementById("tiles");
+        container.innerHTML = "";
 
-    data.forEach(tile => {
+        if(!Array.isArray(data) || data.length === 0){
+            showMessage("Brak zajętych kafelków.");
+            return;
+        }
 
-        const div =
-            document.createElement("div");
+        showMessage("");
 
-        div.className = "row";
+        data.forEach(tile => {
+            const div = document.createElement("div");
+            div.className = "row";
 
-        div.innerHTML = `
-            <div>
-                Kafelek #${tile.id}
-                — ${tile.nickname}
-            </div>
+            const info = document.createElement("div");
+            info.innerText = `Kafelek #${escapeText(tile.id)} — ${escapeText(tile.nickname)}`;
 
-            <button
-                onclick="unlockTile(${tile.id})">
-                Odblokuj
-            </button>
-        `;
+            const button = document.createElement("button");
+            button.innerText = "Odblokuj";
+            button.onclick = () => unlockTile(tile.id);
 
-        container.appendChild(div);
+            div.appendChild(info);
+            div.appendChild(button);
 
-    });
+            container.appendChild(div);
+        });
 
+    }catch(error){
+        showMessage("Nie można połączyć się z serwerem.");
+    }
 }
 
 async function unlockTile(id){
+    const token = getToken();
 
-    const token =
-        localStorage.getItem("token");
+    if(!token){
+        showMessage("Brak tokenu. Zaloguj się ponownie.");
+        window.location.href = "/";
+        return;
+    }
 
-    const response =
-        await fetch(
-            `/api/tiles/unlock/${id}`,
-            {
-                method:"POST",
-                headers:{
-                    Authorization:
-                        `Bearer ${token}`
-                }
+    const confirmed = confirm(`Czy na pewno chcesz odblokować kafelek #${id}?`);
+
+    if(!confirmed){
+        return;
+    }
+
+    try{
+        const response = await fetch(`/api/tiles/unlock/${id}`, {
+            method:"POST",
+            headers:{
+                Authorization:`Bearer ${token}`
             }
-        );
+        });
 
-    const data =
-        await response.json();
+        const data = await response.json();
 
-    alert(data.message);
+        if(!response.ok){
+            showMessage(data.message || "Nie udało się odblokować kafelka.");
+            return;
+        }
 
-    loadTiles();
+        showMessage(data.message || "Kafelek odblokowany.");
+        await loadTiles();
+
+    }catch(error){
+        showMessage("Nie można połączyć się z serwerem.");
+    }
 }
 
 loadTiles();
-
 </script>
 
 </body>

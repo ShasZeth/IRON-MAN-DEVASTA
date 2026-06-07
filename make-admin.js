@@ -1,16 +1,32 @@
 const db = require("./database/db");
 
-db.run(
-    "UPDATE users SET isAdmin = 1 WHERE nickname = ?",
-    ["Admin"],
-    function(err) {
+const adminNickname = process.env.ADMIN_NICKNAME || "Admin";
 
-        if (err) {
+db.run(
+    `
+    UPDATE users
+    SET isadmin = 1
+    WHERE nickname = ?
+    `,
+    [adminNickname],
+    function(err){
+        if(err){
+            console.error("Błąd nadawania administratora:");
             console.error(err);
-        } else {
-            console.log("Admin otrzymał uprawnienia administratora.");
+            process.exit(1);
         }
 
-        db.close();
+        if(this.changes === 0){
+            console.log(
+                `Nie znaleziono użytkownika "${adminNickname}".`
+            );
+            process.exit(0);
+        }
+
+        console.log(
+            `Użytkownik "${adminNickname}" otrzymał uprawnienia administratora.`
+        );
+
+        process.exit(0);
     }
 );
