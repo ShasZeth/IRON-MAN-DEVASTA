@@ -2754,11 +2754,14 @@ async function saveUserBonus(nickname){
         return;
     }
 
+    const token = localStorage.getItem("token");
+
     const response = await fetch("/api/tiles/users/bonus-points", {
         method:"POST",
         headers:{
-            "Content-Type":"application/json"
-        },
+        "Content-Type":"application/json",
+        Authorization:`Bearer ${token}`
+    },
         body:JSON.stringify({
             nickname:nickname,
             adminBonusPoints:adminBonus,
