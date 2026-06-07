@@ -177,8 +177,8 @@ body{
 }
 
 .special-tile-row.special-tile-locked{
-    background:linear-gradient(145deg, #303030, #666);
-    border-color:#999;
+    background:linear-gradient(145deg, #303030, #666) !important;
+    border-color:#999 !important;
     color:#ddd;
     opacity:.95;
 }
@@ -420,6 +420,16 @@ body{
 .tile.board-locked .tile-title,
 .tile.board-locked small{
     color:#f1f1f1;
+}
+
+.tile-board-lock-time{
+    display:block;
+    width:100%;
+    text-align:center;
+    margin-top:4px;
+    color:#ffd700 !important;
+    font-size:13px;
+    line-height:1.15;
 }
 
 /* GŁÓWNA ZAWARTOŚĆ */
@@ -2783,18 +2793,26 @@ async function loadTiles(){
     const div = document.createElement("div");
     div.className = "tile";
 
-    const boardLocked = isBoardLocked() && !isAdmin();
+    const boardLocked = isBoardLocked();
 
     if(boardLocked && !tile.taken){
         div.classList.add("board-locked");
 
+        const lockedTitle = isAdmin()
+            ? (
+                tile.tile_name
+                    ? `#${tile.tile_number || tile.id} ${tile.tile_name}`
+                    : `#${tile.tile_number || tile.id}`
+            )
+            : "🔒 Ukryte zadanie";
+
         div.innerHTML = `
             <div class="tile-title">
-                🔒 Ukryte zadanie
+                ${lockedTitle}
             </div>
 
             <small>
-                Zablokowany
+                🔒 Zablokowany
             </small>
 
             <small class="tile-board-lock-time board-lock-countdown">
@@ -2802,7 +2820,26 @@ async function loadTiles(){
             </small>
         `;
 
+        if(isAdmin()){
+            const editBtn = document.createElement("button");
+            editBtn.className = "tile-edit-btn";
+            editBtn.innerText = "✏️";
+            editBtn.title = "Edytuj kafelek";
+
+            editBtn.onclick = (event) => {
+                event.stopPropagation();
+                openTileModal(tile);
+            };
+
+            div.appendChild(editBtn);
+        }
+
         div.onclick = () => {
+            if(isAdmin()){
+                openTileModal(tile);
+                return;
+            }
+
             showToast(`Tablica odblokuje się za ${getBoardUnlockTimeLeft()}.`, "info");
         };
 
