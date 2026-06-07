@@ -524,56 +524,28 @@ router.get("/admin/all", auth, (req, res) => {
         });
     }
 
-    db.get(
+    db.all(
         `
-        SELECT locked_until
-        FROM board_lock
-        WHERE id = 1
+        SELECT 
+            tiles.*,
+            users.nickname,
+            COALESCE(users.bonus_points, 0) AS bonus_points,
+            COALESCE(users.admin_bonus_points, 0) AS admin_bonus_points,
+            COALESCE(users.admin_penalty_points, 0) AS admin_penalty_points
+        FROM tiles
+        LEFT JOIN users ON users.id = tiles.takenby
+        ORDER BY tiles.id
         `,
         [],
-        (lockErr, lockRow) => {
-            if(lockErr){
-                console.error("LOAD ADMIN BOARD LOCK ERROR:", lockErr);
+        (err, rows) => {
+            if(err){
+                console.error("LOAD ADMIN TILES ERROR:", err);
                 return res.status(500).json({
-                    message:"Błąd pobierania blokady tablicy."
+                    message:"Błąd pobierania kafelków."
                 });
             }
 
-            db.all(
-                `
-                SELECT 
-                    tiles.*,
-                    users.nickname,
-                    COALESCE(users.bonus_points, 0) AS bonus_points,
-                    COALESCE(users.admin_bonus_points, 0) AS admin_bonus_points,
-                    COALESCE(users.admin_penalty_points, 0) AS admin_penalty_points
-                FROM tiles
-                LEFT JOIN users ON users.id = tiles.takenby
-                ORDER BY tiles.id
-                `,
-                [],
-                (err, rows) => {
-                    if(err){
-                        console.error("LOAD ADMIN TILES ERROR:", err);
-                        return res.status(500).json({
-                            message:"Błąd pobierania kafelków."
-                        });
-                    }
-
-                    const boardLockUntil = lockRow && lockRow.locked_until
-                        ? lockRow.locked_until
-                        : null;
-
-                    const boardLocked =
-                        boardLockUntil &&
-                        new Date(boardLockUntil).getTime() > Date.now();
-
-                    res.json({
-                        tiles:rows,
-                        boardLockUntil:boardLocked ? boardLockUntil : null
-                    });
-                }
-            );
+            res.json(rows);
         }
     );
 });
@@ -610,99 +582,80 @@ router.get("/ranking/points", (req, res) => {
 });
 
 router.get("/", (req, res) => {
-    db.get(
-        `
-        SELECT locked_until
-        FROM board_lock
-        WHERE id = 1
-        `,
-        [],
-        (lockErr, lockRow) => {
-            if(lockErr){
-                console.error("LOAD BOARD LOCK ERROR:", lockErr);
-                return res.status(500).json({
-                    message:"Błąd pobierania blokady tablicy."
-                });
-            }
+    getBoardLockStatus((lockErr, boardLock) => {
+        if(lockErr){
+            console.error("LOAD BOARD LOCK ERROR:", lockErr);
+            return res.status(500).json({
+                message:"Błąd pobierania blokady tablicy."
+            });
+        }
 
-            db.all(
-                `
-                SELECT 
-                    tiles.*,
-                    users.nickname,
-                    COALESCE(users.bonus_points, 0) AS bonus_points,
-                    COALESCE(users.admin_bonus_points, 0) AS admin_bonus_points,
-                    COALESCE(users.admin_penalty_points, 0) AS admin_penalty_points
-                FROM tiles
-                LEFT JOIN users ON users.id = tiles.takenby
-                ORDER BY tiles.id
-                `,
-                [],
-                (err, rows) => {
-                    if(err){
-                        console.error("LOAD TILES ERROR:", err);
-                        return res.status(500).json({
-                            message:"Błąd pobierania kafelków."
-                        });
-                    }
-
-                    const now = Date.now();
-
-                    const boardLockUntil = lockRow && lockRow.locked_until
-                        ? lockRow.locked_until
-                        : null;
-
-                    const boardLocked =
-                        boardLockUntil &&
-                        new Date(boardLockUntil).getTime() > now;
-
-                    const safeRows = rows.map(tile => {
-                        const isSpecial = tile.is_special === 1 || tile.is_special === true;
-
-                        const isSpecialLocked =
-                            isSpecial &&
-                            tile.unlock_at &&
-                            new Date(tile.unlock_at).getTime() > now;
-
-                        if(isSpecialLocked){
-                            return {
-                                ...tile,
-                                tile_name:null,
-                                points:0,
-                                screenshot_url:null,
-                                nickname:null,
-                                taken:0,
-                                takenby:null,
-                                takenat:null,
-                                is_locked:1
-                            };
-                        }
-
-                        if(boardLocked && !isSpecial && !tile.taken){
-                            return {
-                                ...tile,
-                                tile_name:null,
-                                points:0,
-                                screenshot_url:null,
-                                nickname:null,
-                                taken:0,
-                                takenby:null,
-                                takenat:null,
-                                is_board_locked:1
-                            };
-                        }
-
-                        return tile;
-                    });
-
-                    res.json({
-                        tiles:safeRows,
-                        boardLockUntil:boardLocked ? boardLockUntil : null
+        db.all(
+            `
+            SELECT 
+                tiles.*,
+                users.nickname,
+                COALESCE(users.bonus_points, 0) AS bonus_points,
+                COALESCE(users.admin_bonus_points, 0) AS admin_bonus_points,
+                COALESCE(users.admin_penalty_points, 0) AS admin_penalty_points
+            FROM tiles
+            LEFT JOIN users ON users.id = tiles.takenby
+            ORDER BY tiles.id
+            `,
+            [],
+            (err, rows) => {
+                if(err){
+                    console.error("LOAD TILES ERROR:", err);
+                    return res.status(500).json({
+                        message:"Błąd pobierania kafelków."
                     });
                 }
-            );
-        }
-    );
+
+                const now = Date.now();
+
+                const safeRows = rows.map(tile => {
+                    const isSpecial = tile.is_special === 1 || tile.is_special === true;
+
+                    const isSpecialLocked =
+                        isSpecial &&
+                        tile.unlock_at &&
+                        new Date(tile.unlock_at).getTime() > now;
+
+                    if(isSpecialLocked){
+                        return {
+                            ...tile,
+                            tile_name:null,
+                            points:0,
+                            screenshot_url:null,
+                            nickname:null,
+                            taken:0,
+                            takenby:null,
+                            takenat:null,
+                            is_locked:1
+                        };
+                    }
+
+                    if(boardLock.locked && !isSpecial && !tile.taken){
+                        return {
+                            ...tile,
+                            tile_name:null,
+                            points:0,
+                            screenshot_url:null,
+                            nickname:null,
+                            taken:0,
+                            takenby:null,
+                            takenat:null,
+                            is_board_locked:1
+                        };
+                    }
+
+                    return tile;
+                });
+
+                res.json(safeRows);
+            }
+        );
+    });
 });
 router.delete("/:id", auth, (req, res) => {
 

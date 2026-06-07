@@ -2751,10 +2751,22 @@ async function loadTiles(){
             ? { Authorization:`Bearer ${token}` }
             : {}
     });
-    const tiles = await response.json();
 
-    const boardLockResponse = await fetch("/api/tiles/board-lock/status");
-    window.currentBoardLock = await boardLockResponse.json();
+    const payload = await response.json();
+
+    const tiles = Array.isArray(payload)
+        ? payload
+        : (payload.tiles || []);
+
+    if(!Array.isArray(payload) && payload.boardLockUntil){
+        window.currentBoardLock = {
+            locked:true,
+            unlock_at:payload.boardLockUntil
+        };
+    }else{
+        const boardLockResponse = await fetch("/api/tiles/board-lock/status");
+        window.currentBoardLock = await boardLockResponse.json();
+    }
 
     const regularTiles = tiles.filter(tile => !isSpecialTile(tile));
     const specialTiles = tiles.filter(tile => isSpecialTile(tile));
@@ -2785,7 +2797,7 @@ async function loadTiles(){
                 Zablokowany
             </small>
 
-            <small class="tile-board-lock-time">
+            <small class="tile-board-lock-time board-lock-countdown">
                 Odblokuje się za ${getBoardUnlockTimeLeft()}
             </small>
         `;
