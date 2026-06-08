@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Regulamin - IRON MAN DEVASTA</title>
+
+<style>
+body{
+    margin:0;
+    min-height:100vh;
+    font-family:Arial, sans-serif;
+    color:white;
+
+    background:
+        linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.85)),
+        url("/img/login-bg.png");
+
+    background-size:cover;
+    background-position:center top;
+    background-repeat:no-repeat;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.rules-box{
+    width:720px;
+    max-width:calc(100vw - 40px);
+    max-height:calc(100vh - 60px);
+    overflow:auto;
+
+    background:rgba(8,8,8,.88);
+    border:2px solid rgba(255,215,0,.65);
+    border-radius:18px;
+
+    padding:32px;
+
+    box-shadow:
+        0 0 25px rgba(0,0,0,.9),
+        0 0 28px rgba(255,120,0,.25),
+        inset 0 0 22px rgba(255,215,0,.08);
+}
+
+h1{
+    margin-top:0;
+    text-align:center;
+    color:#ffd700;
+    text-shadow:
+        0 0 8px #ffd700,
+        0 0 18px #ff9900,
+        0 0 28px #ff3300;
+}
+
+h2{
+    color:#ffd700;
+    margin-top:28px;
+}
+
+p, li{
+    line-height:1.55;
+}
+
+ul{
+    padding-left:22px;
+}
+
+.accept-row{
+    margin-top:26px;
+    padding:16px;
+    border:1px solid rgba(255,215,0,.35);
+    border-radius:10px;
+    background:rgba(0,0,0,.35);
+}
+
+.accept-row label{
+    cursor:pointer;
+    font-weight:bold;
+    color:#ffd700;
+}
+
+button{
+    width:100%;
+    margin-top:18px;
+    padding:14px;
+    border:none;
+    border-radius:10px;
+
+    background:linear-gradient(145deg,#8a5a00,#ffd700,#fff06a);
+    color:#1b1200;
+
+    font-weight:bold;
+    cursor:pointer;
+
+    box-shadow:
+        0 0 12px rgba(255,215,0,.42),
+        inset 0 0 10px rgba(255,255,255,.22);
+}
+
+button:hover{
+    filter:brightness(1.12);
+}
+
+#message{
+    text-align:center;
+    color:#ff5555;
+    font-weight:bold;
+    min-height:20px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="rules-box">
+    <h1>Regulamin IRON MAN DEVASTA</h1>
+
+    <p>
+        Przed wejściem na planszę musisz przeczytać i zaakceptować regulamin.
+        Akceptacja jest wymagana tylko raz dla Twojego konta.
+    </p>
+
+    <h2>1. Zasady ogólne</h2>
+    <ul>
+        <li>Każdy gracz bierze udział uczciwie i nie wykorzystuje błędów strony.</li>
+        <li>Nie podszywamy się pod innych użytkowników.</li>
+        <li>Nie spamujemy, nie obrażamy i nie utrudniamy gry innym osobom.</li>
+    </ul>
+
+    <h2>2. Kafelki i screeny</h2>
+    <ul>
+        <li>Screenshot musi potwierdzać wykonanie zadania.</li>
+        <li>Administrator może odrzucić błędny lub nieczytelny screenshot.</li>
+        <li>Nie wolno zajmować kafelków w sposób niezgodny z zasadami wydarzenia.</li>
+    </ul>
+
+    <h2>3. Punkty i decyzje administratora</h2>
+    <ul>
+        <li>Administrator może dodać premię punktową lub karę punktową.</li>
+        <li>Administrator może odblokować, edytować lub usunąć kafelek, jeśli zajdzie taka potrzeba.</li>
+        <li>Decyzje administratora są ostateczne.</li>
+    </ul>
+
+    <h2>4. Akceptacja</h2>
+    <p>
+        Klikając przycisk akceptacji potwierdzasz, że przeczytałeś regulamin i zgadzasz się
+        przestrzegać zasad IRON MAN DEVASTA.
+    </p>
+
+    <div class="accept-row">
+        <label>
+            <input type="checkbox" id="acceptCheckbox">
+            Akceptuję regulamin
+        </label>
+    </div>
+
+    <button onclick="acceptRules()">
+        Akceptuję i przechodzę do planszy
+    </button>
+
+    <p id="message"></p>
+</div>
+
+<script>
+async function acceptRules(){
+    const checkbox = document.getElementById("acceptCheckbox");
+    const message = document.getElementById("message");
+
+    if(!checkbox.checked){
+        message.innerText = "Musisz zaakceptować regulamin.";
+        return;
+    }
+
+    const token = localStorage.getItem("token");
+
+    if(!token){
+        window.location.href = "/";
+        return;
+    }
+
+    const response = await fetch("/api/rules/accept", {
+        method:"POST",
+        headers:{
+            Authorization:`Bearer ${token}`
+        }
+    });
+
+    const data = await response.json();
+
+    if(data.success){
+        localStorage.setItem("token", data.token);
+        window.location.href = "/board.html";
+    }else{
+        message.innerText = data.message || "Błąd akceptacji regulaminu.";
+    }
+}
+</script>
+
+</body>
+</html>

@@ -19,7 +19,9 @@ async function initDatabase() {
                 created_at TIMESTAMP DEFAULT NOW(),
                 bonus_points INTEGER DEFAULT 0,
                 admin_bonus_points INTEGER DEFAULT 0,
-                admin_penalty_points INTEGER DEFAULT 0
+                admin_penalty_points INTEGER DEFAULT 0,
+                rules_accepted INTEGER DEFAULT 0,
+                rules_accepted_at TIMESTAMP
             )
         `);
 
@@ -41,6 +43,16 @@ async function initDatabase() {
         await pool.query(`
             ALTER TABLE users
             ADD COLUMN IF NOT EXISTS admin_penalty_points INTEGER DEFAULT 0
+        `);
+
+        await pool.query(`
+            ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS rules_accepted INTEGER DEFAULT 0
+        `);
+
+        await pool.query(`
+            ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS rules_accepted_at TIMESTAMP
         `);
 
         /*

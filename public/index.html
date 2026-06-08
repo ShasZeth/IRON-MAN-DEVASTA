@@ -269,7 +269,12 @@ async function login(){
 
     if(data.success){
         localStorage.setItem("token", data.token);
-        window.location.href = "/board.html";
+
+        if(data.rulesAccepted){
+            window.location.href = "/board.html";
+        }else{
+            window.location.href = "/rules.html";
+        }
     }else{
         document.getElementById("loginResult").innerText =
             data.message;
