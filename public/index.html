@@ -9,7 +9,15 @@ body{
     margin:0;
     min-height:100vh;
     font-family:Arial, sans-serif;
-    background:#111;
+    color:white;
+
+    background:
+        linear-gradient(rgba(0,0,0,.55), rgba(0,0,0,.72)),
+        url("/img/login-bg.png");
+
+    background-size:cover;
+    background-position:center;
+    background-repeat:no-repeat;
 
     display:flex;
     align-items:center;
@@ -17,12 +25,16 @@ body{
 }
 
 .container{
-    width:360px;
-    background:#222;
+    width:380px;
+    background:rgba(12,12,12,.82);
     color:white;
-    padding:25px;
-    border-radius:12px;
-    box-shadow:0 0 20px rgba(0,0,0,.5);
+    padding:28px;
+    border-radius:14px;
+    border:1px solid rgba(255,215,0,.45);
+    box-shadow:
+        0 0 25px rgba(0,0,0,.9),
+        0 0 25px rgba(255,120,0,.18);
+    backdrop-filter:blur(4px);
 }
 
 .box{
@@ -31,6 +43,8 @@ body{
 
 h1,h2{
     text-align:center;
+    color:#ffd700;
+    text-shadow:0 0 10px rgba(255,180,0,.55);
 }
 
 input{
@@ -38,8 +52,14 @@ input{
     padding:12px;
     margin:8px 0;
     box-sizing:border-box;
-    border:none;
+    border:1px solid #b8860b;
     border-radius:6px;
+    background:#111;
+    color:#ffd700;
+}
+
+input::placeholder{
+    color:#cfcfcf;
 }
 
 button{
@@ -53,18 +73,23 @@ button{
 }
 
 .register-btn{
-    background:#28a745;
+    background:linear-gradient(145deg,#8b0000,#d01818);
     color:white;
 }
 
 .login-btn{
-    background:#007bff;
-    color:white;
+    background:linear-gradient(145deg,#b8860b,#ffd700);
+    color:#111;
 }
 
 .message{
     text-align:center;
     margin-top:10px;
+}
+
+hr{
+    border:0;
+    border-top:1px solid rgba(255,215,0,.45);
 }
 </style>
 </head>
