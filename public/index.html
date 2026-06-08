@@ -40,6 +40,8 @@ body{
     background-size:100% 100%;
     background-repeat:no-repeat;
     background-position:center;
+
+    filter:drop-shadow(0 0 14px rgba(255,80,0,.35));
 }
 
 .register-frame{
@@ -58,14 +60,26 @@ body{
     height:26px;
     padding:0 8px;
 
-    background:rgba(0,255,0,.15);
-    border:2px solid #00ff00;
-
+    border:none;
     outline:none;
+
+    background:rgba(0,0,0,.18);
+    box-shadow:
+        inset 0 0 8px rgba(0,0,0,.9),
+        0 0 8px rgba(255,180,0,.20);
+
     color:#ffd700;
     font-weight:bold;
     font-size:12px;
     box-sizing:border-box;
+}
+
+.auth-frame input:focus{
+    background:rgba(0,0,0,.28);
+    box-shadow:
+        inset 0 0 8px rgba(0,0,0,.95),
+        0 0 10px rgba(255,215,0,.55),
+        0 0 18px rgba(255,80,0,.35);
 }
 
 .auth-frame input::placeholder{
@@ -89,12 +103,26 @@ body{
     width:169px;
     height:35px;
 
-    border:2px solid red;
-    background:rgba(255,0,0,.15);
+    border:none;
+    background:rgba(255,0,0,.03);
 
     color:transparent;
     cursor:pointer;
     box-sizing:border-box;
+}
+
+.frame-btn:hover{
+    background:rgba(255,50,0,.12);
+    box-shadow:
+        0 0 12px rgba(255,0,0,.45),
+        0 0 20px rgba(255,180,0,.25);
+}
+
+.frame-btn:active{
+    background:rgba(255,215,0,.12);
+    box-shadow:
+        0 0 16px rgba(255,215,0,.55),
+        0 0 24px rgba(255,0,0,.35);
 }
 
 .message{
@@ -107,7 +135,9 @@ body{
     color:#ffd700;
     font-size:12px;
     font-weight:bold;
-    text-shadow:0 0 8px black;
+    text-shadow:
+        0 0 8px black,
+        0 0 8px rgba(255,120,0,.75);
     min-height:16px;
 }
 
