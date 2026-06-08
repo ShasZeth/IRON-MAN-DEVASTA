@@ -12,21 +12,29 @@ body{
     color:white;
 
     background:
-        linear-gradient(rgba(0,0,0,.55), rgba(0,0,0,.72)),
+        linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.68)),
         url("/img/login-bg.png");
 
     background-size:cover;
-    background-position:center;
+    background-position:center top;
     background-repeat:no-repeat;
 
     display:flex;
-    align-items:center;
     justify-content:center;
+    align-items:flex-start;
 }
 
 .container{
-    width:380px;
-    background:rgba(12,12,12,.82);
+    display:flex;
+    gap:50px;
+    justify-content:center;
+    align-items:flex-start;
+    margin-top:360px;
+}
+
+.panel{
+    width:360px;
+    background:rgba(12,12,12,.84);
     color:white;
     padding:28px;
     border-radius:14px;
@@ -37,14 +45,11 @@ body{
     backdrop-filter:blur(4px);
 }
 
-.box{
-    margin-bottom:25px;
-}
-
-h1,h2{
+h1{
     text-align:center;
     color:#ffd700;
     text-shadow:0 0 10px rgba(255,180,0,.55);
+    margin-top:0;
 }
 
 input{
@@ -85,11 +90,21 @@ button{
 .message{
     text-align:center;
     margin-top:10px;
+    min-height:20px;
 }
 
-hr{
-    border:0;
-    border-top:1px solid rgba(255,215,0,.45);
+@media(max-width:900px){
+    .container{
+        flex-direction:column;
+        gap:25px;
+        margin-top:260px;
+        padding:20px;
+    }
+
+    .panel{
+        width:calc(100vw - 80px);
+        max-width:360px;
+    }
 }
 </style>
 </head>
@@ -98,7 +113,7 @@ hr{
 
 <div class="container">
 
-    <div class="box">
+    <div class="panel">
         <h1>Rejestracja</h1>
 
         <input id="registerNickname" placeholder="Nickname">
@@ -111,10 +126,8 @@ hr{
         <p id="registerResult" class="message"></p>
     </div>
 
-    <hr>
-
-    <div class="box">
-        <h2>Logowanie</h2>
+    <div class="panel">
+        <h1>Logowanie</h1>
 
         <input id="loginNickname" placeholder="Nickname">
         <input id="loginPassword" type="password" placeholder="Hasło">
@@ -184,6 +197,3 @@ async function login(){
     }
 }
 </script>
-
-</body>
-</html>
