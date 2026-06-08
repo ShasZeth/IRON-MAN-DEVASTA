@@ -12,7 +12,7 @@ body{
     color:white;
 
     background:
-        linear-gradient(rgba(0,0,0,.28), rgba(0,0,0,.72)),
+        linear-gradient(rgba(0,0,0,.20), rgba(0,0,0,.68)),
         url("/img/login-bg.png");
 
     background-size:cover;
@@ -21,224 +21,105 @@ body{
 
     display:flex;
     justify-content:center;
-    align-items:flex-start;
+    align-items:center;
+    overflow:hidden;
 }
 
 .container{
+    width:100%;
     display:flex;
-    gap:250px;
-    justify-content:center;
-    align-items:flex-start;
-    margin-top:14px;
-}
-
-.panel{
-    position:relative;
-    width:360px;
-    padding:34px 30px 32px 30px;
-    border-radius:22px;
-
-    background:
-        radial-gradient(circle at top, rgba(255,190,60,.13), transparent 35%),
-        linear-gradient(180deg, rgba(18,12,8,.92), rgba(4,4,4,.96));
-
-    border:2px solid #d4a017;
-
-    box-shadow:
-        0 0 0 1px rgba(255,230,120,.18),
-        0 0 18px rgba(255,215,0,.35),
-        0 0 38px rgba(255,100,0,.28),
-        0 0 70px rgba(160,0,0,.22),
-        inset 0 0 18px rgba(255,215,0,.10),
-        inset 0 0 40px rgba(0,0,0,.80);
-
-    backdrop-filter:blur(7px);
-    overflow:hidden;
-    animation:panelGlow 4s infinite ease-in-out;
-}
-
-.panel::before{
-    content:"";
-    position:absolute;
-    inset:8px;
-    border-radius:15px;
-    border:1px solid rgba(255,215,0,.42);
-    pointer-events:none;
-    box-shadow:
-        inset 0 0 14px rgba(255,215,0,.12),
-        0 0 12px rgba(255,160,0,.18);
-}
-
-.panel::after{
-    content:"◆";
-    position:absolute;
-    top:-18px;
-    left:50%;
-    transform:translateX(-50%);
-    width:54px;
-    height:54px;
-    display:flex;
+    justify-content:space-between;
     align-items:center;
-    justify-content:center;
-
-    color:#ff1f1f;
-    font-size:28px;
-    text-shadow:
-        0 0 8px #ff0000,
-        0 0 18px #ff6600,
-        0 0 26px #ffd700;
-
-    background:
-        radial-gradient(circle, rgba(255,0,0,.35), rgba(0,0,0,.9) 60%);
-    border:1px solid rgba(255,215,0,.7);
-    border-radius:50%;
-    box-shadow:
-        0 0 14px rgba(255,0,0,.65),
-        0 0 24px rgba(255,180,0,.32);
-}
-
-@keyframes panelGlow{
-    0%{
-        box-shadow:
-            0 0 0 1px rgba(255,230,120,.14),
-            0 0 14px rgba(255,215,0,.25),
-            0 0 32px rgba(255,100,0,.20),
-            0 0 60px rgba(160,0,0,.14),
-            inset 0 0 18px rgba(255,215,0,.08),
-            inset 0 0 40px rgba(0,0,0,.80);
-    }
-
-    50%{
-        box-shadow:
-            0 0 0 1px rgba(255,230,120,.28),
-            0 0 24px rgba(255,215,0,.55),
-            0 0 48px rgba(255,100,0,.36),
-            0 0 85px rgba(190,0,0,.26),
-            inset 0 0 22px rgba(255,215,0,.14),
-            inset 0 0 45px rgba(0,0,0,.84);
-    }
-
-    100%{
-        box-shadow:
-            0 0 0 1px rgba(255,230,120,.14),
-            0 0 14px rgba(255,215,0,.25),
-            0 0 32px rgba(255,100,0,.20),
-            0 0 60px rgba(160,0,0,.14),
-            inset 0 0 18px rgba(255,215,0,.08),
-            inset 0 0 40px rgba(0,0,0,.80);
-    }
-}
-
-h1{
-    text-align:center;
-    color:#ffd700;
-    margin:0 0 24px 0;
-    font-size:30px;
-    letter-spacing:.5px;
-    text-shadow:
-        0 0 7px #ffd700,
-        0 0 18px #ff9900,
-        0 0 30px #ff3300;
-}
-
-input{
-    width:100%;
-    padding:13px 14px;
-    margin:9px 0;
+    padding:0 90px;
     box-sizing:border-box;
-
-    border:1px solid #d4a017;
-    border-radius:8px;
-
-    background:
-        linear-gradient(180deg, rgba(14,14,14,.96), rgba(3,3,3,.98));
-
-    color:#ffd700;
-    outline:none;
-
-    box-shadow:
-        inset 0 0 10px rgba(0,0,0,.85),
-        0 0 8px rgba(255,180,0,.12);
+    transform:translateY(-10px);
 }
 
-input:focus{
-    border-color:#ffd700;
-    box-shadow:
-        0 0 12px rgba(255,215,0,.45),
-        inset 0 0 10px rgba(0,0,0,.85);
-}
-
-input::placeholder{
-    color:#d0d0d0;
-}
-
-button{
+.auth-frame{
     position:relative;
-    width:100%;
-    padding:13px;
-    margin-top:15px;
+    width:400px;
+    height:270px;
+    background-size:100% 100%;
+    background-repeat:no-repeat;
+    background-position:center;
+}
+
+.register-frame{
+    background-image:url("/img/rejestracja-bgrl.png");
+}
+
+.login-frame{
+    background-image:url("/img/logowanie-bgrl.png");
+}
+
+.auth-frame input{
+    position:absolute;
+    left:130px;
+    width:205px;
+    height:24px;
+    padding:0 8px;
 
     border:none;
-    border-radius:8px;
+    outline:none;
+    background:transparent;
+
+    color:#ffd700;
+    font-weight:bold;
+    font-size:12px;
+}
+
+.auth-frame input::placeholder{
+    color:transparent;
+}
+
+.nickname-input{
+    top:122px;
+}
+
+.password-input{
+    top:165px;
+}
+
+.frame-btn{
+    position:absolute;
+    left:126px;
+    top:210px;
+    width:220px;
+    height:35px;
+
+    border:none;
+    background:transparent;
+    color:transparent;
 
     cursor:pointer;
-    font-weight:bold;
-    overflow:hidden;
-
-    transition:
-        transform .18s ease,
-        filter .18s ease,
-        box-shadow .18s ease;
-}
-
-button:hover{
-    transform:translateY(-2px);
-    filter:brightness(1.14);
-}
-
-button:active{
-    transform:translateY(0) scale(.98);
-}
-
-.register-btn{
-    background:linear-gradient(145deg,#7a0000,#d01818,#ff4a1c);
-    color:white;
-    box-shadow:
-        0 0 12px rgba(255,0,0,.35),
-        inset 0 0 10px rgba(255,255,255,.10);
-}
-
-.login-btn{
-    background:linear-gradient(145deg,#8a5a00,#ffd700,#fff06a);
-    color:#1b1200;
-    box-shadow:
-        0 0 12px rgba(255,215,0,.42),
-        inset 0 0 10px rgba(255,255,255,.22);
 }
 
 .message{
+    position:absolute;
+    left:40px;
+    right:40px;
+    bottom:-18px;
+
     text-align:center;
-    margin-top:12px;
-    min-height:20px;
     color:#ffd700;
-    text-shadow:0 0 8px rgba(255,120,0,.35);
+    font-size:12px;
+    font-weight:bold;
+    text-shadow:0 0 8px black;
+    min-height:16px;
 }
 
-@media(max-width:900px){
+@media(max-width:1100px){
     body{
-        background-position:center top;
+        overflow:auto;
+        align-items:flex-start;
     }
 
     .container{
         flex-direction:column;
-        gap:25px;
-        margin-top:240px;
+        gap:22px;
         padding:20px;
-    }
-
-    .panel{
-        width:calc(100vw - 90px);
-        max-width:360px;
+        transform:none;
+        margin-top:180px;
     }
 }
 </style>
@@ -248,30 +129,110 @@ button:active{
 
 <div class="container">
 
-    <div class="panel">
-        <h1>Rejestracja</h1>
+    <div class="auth-frame register-frame">
+        <input
+            id="registerNickname"
+            class="nickname-input"
+            placeholder="Nickname"
+        >
 
-        <input id="registerNickname" placeholder="Nickname">
-        <input id="registerPassword" type="password" placeholder="Hasło">
+        <input
+            id="registerPassword"
+            class="password-input"
+            type="password"
+            placeholder="Hasło"
+        >
 
-        <button class="register-btn" onclick="register()">
-            Utwórz konto
+        <button
+            class="frame-btn"
+            onclick="register()">
+            Zarejestruj się
         </button>
 
         <p id="registerResult" class="message"></p>
     </div>
 
-    <div class="panel">
-        <h1>Logowanie</h1>
+    <div class="auth-frame login-frame">
+        <input
+            id="loginNickname"
+            class="nickname-input"
+            placeholder="Nickname"
+        >
 
-        <input id="loginNickname" placeholder="Nickname">
-        <input id="loginPassword" type="password" placeholder="Hasło">
+        <input
+            id="loginPassword"
+            class="password-input"
+            type="password"
+            placeholder="Hasło"
+        >
 
-        <button class="login-btn" onclick="login()">
-            Zaloguj
+        <button
+            class="frame-btn"
+            onclick="login()">
+            Zaloguj się
         </button>
 
         <p id="loginResult" class="message"></p>
     </div>
 
 </div>
+
+<script>
+async function register(){
+
+    const nickname =
+        document.getElementById("registerNickname").value;
+
+    const password =
+        document.getElementById("registerPassword").value;
+
+    const response = await fetch("/api/register", {
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+            nickname,
+            password
+        })
+    });
+
+    const data = await response.json();
+
+    document.getElementById("registerResult").innerText =
+        data.message || "Konto utworzone! Możesz się zalogować.";
+}
+
+async function login(){
+
+    const nickname =
+        document.getElementById("loginNickname").value;
+
+    const password =
+        document.getElementById("loginPassword").value;
+
+    const response = await fetch("/api/login", {
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+            nickname,
+            password
+        })
+    });
+
+    const data = await response.json();
+
+    if(data.success){
+        localStorage.setItem("token", data.token);
+        window.location.href = "/board.html";
+    }else{
+        document.getElementById("loginResult").innerText =
+            data.message;
+    }
+}
+</script>
+
+</body>
+</html>
